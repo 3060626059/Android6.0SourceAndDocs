@@ -36,7 +36,9 @@ class ApplicationLoaders
          * bootstrap class loader.
          */
         ClassLoader baseParent = ClassLoader.getSystemClassLoader().getParent();
-
+        //ClassLoader.getSystemClassLoader返回的是另外一个PathClassLoader,
+        //baseParent是BootClassLoader,
+        //我们构造的PathClassLoader和上面这个PathClassLoader共用一个BootClassLoader
         synchronized (mLoaders) {
             if (parent == null) {
                 parent = baseParent;

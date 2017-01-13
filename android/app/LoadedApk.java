@@ -93,13 +93,15 @@ public final class LoadedApk {
     private final String mDataDir;
     private final String mLibDir;
     private final File mDataDirFile;
-    private final ClassLoader mBaseClassLoader;
+    private final ClassLoader mBaseClassLoader;//目前是为null
     private final boolean mSecurityViolation;
     private final boolean mIncludeCode;
     private final boolean mRegisterPackage;
     private final DisplayAdjustments mDisplayAdjustments = new DisplayAdjustments();
     Resources mResources;
-    private ClassLoader mClassLoader;
+    //对于一般的LoadedApk，这个字段保存的是生成的PathClassLoader,
+    //对于构造SystemContext,这个构造的也是PathClassLoader,但是和应用程序无关，只和系统有关，
+    private ClassLoader mClassLoader;//构造SystemContext的时候传入的，
     private Application mApplication;
 
     private final ArrayMap<Context, ArrayMap<BroadcastReceiver, ReceiverDispatcher>> mReceivers
@@ -201,7 +203,7 @@ public final class LoadedApk {
         mSecurityViolation = false;
         mIncludeCode = true;
         mRegisterPackage = false;
-        mClassLoader = ClassLoader.getSystemClassLoader();
+        mClassLoader = ClassLoader.getSystemClassLoader(); //也是一个PathClassLoader，但是一般和应用程序无关，只和系统有关
         mResources = Resources.getSystem();
     }
 
@@ -261,11 +263,13 @@ public final class LoadedApk {
 
     public ClassLoader getClassLoader() {
         synchronized (this) {
+            //不管是否包含代码，对于同一个LoadedApk，只要访问过一次，返回的应该都是同一个PathClassLoader,
             if (mClassLoader != null) {
                 return mClassLoader;
             }
 
             if (mIncludeCode && !mPackageName.equals("android")) {
+                //包含代码和不是系统程序，一般走的是这个，
                 // Avoid the binder call when the package is the current application package.
                 // The activity manager will perform ensure that dexopt is performed before
                 // spinning up the process.
@@ -376,12 +380,14 @@ public final class LoadedApk {
                 // Temporarily disable logging of disk reads on the Looper thread
                 // as this is early and necessary.
                 StrictMode.ThreadPolicy oldPolicy = StrictMode.allowThreadDiskReads();
-
+                //mBaseClassLoader一般为null,这个地方返回PathClassLoader
                 mClassLoader = ApplicationLoaders.getDefault().getClassLoader(zip, lib,
                         mBaseClassLoader);
 
                 StrictMode.setThreadPolicy(oldPolicy);
             } else {
+                //对于只包含资源的LoadedApk而言，因为mBaseClassLoader==null,这个地方就返回系统那个PathClassLoader,
+                //照理说这个是不能访问到应用程序资源的，，
                 if (mBaseClassLoader == null) {
                     mClassLoader = ClassLoader.getSystemClassLoader();
                 } else {
@@ -569,6 +575,7 @@ public final class LoadedApk {
         }
 
         try {
+            //这个地方调用getClassLoader啦，返回的就是PathClassLoader
             java.lang.ClassLoader cl = getClassLoader();
             if (!mPackageName.equals("android")) {
                 initializeJavaContextClassLoader();
@@ -1032,6 +1039,7 @@ public final class LoadedApk {
                     return sd.getIServiceConnection();
                 }
             }
+            //不能多次解绑
             ArrayMap<ServiceConnection, LoadedApk.ServiceDispatcher> holder
                     = mUnboundServices.get(context);
             if (holder != null) {
@@ -1180,6 +1188,7 @@ public final class LoadedApk {
         }
 
         public void doConnected(ComponentName name, IBinder service) {
+            //service对应Service的onBind返回的值，
             ServiceDispatcher.ConnectionInfo old;
             ServiceDispatcher.ConnectionInfo info;
 
