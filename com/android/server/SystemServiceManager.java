@@ -23,7 +23,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
-/**
+/**管理SystemService子类的创建，启动等生命周期
  * Manages creating, starting, and other lifecycle events of
  * {@link com.android.server.SystemService system services}.
  *

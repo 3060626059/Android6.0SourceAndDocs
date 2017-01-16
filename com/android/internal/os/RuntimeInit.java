@@ -224,7 +224,7 @@ public class RuntimeInit {
                     "Main method is not public and static on " + className);
         }
 
-        /*
+        /*这个异常被ZygoteInit.main方法里面捕捉到，捕捉到后执行run方法，这样安排是为了清除建立新进程而产生的栈帧，
          * This throw gets caught in ZygoteInit.main(), which responds
          * by invoking the exception's run() method. This arrangement
          * clears up all the stack frames that were required in setting

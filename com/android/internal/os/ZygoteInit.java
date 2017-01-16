@@ -54,9 +54,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
-/**
+/**zygote进程的启动类，
  * Startup class for the zygote process.
- *
+ *预先加载一些类，在unix的domain socket监听命令，然后基于这些命令创建子进程，这些子进程会继承zygote进程虚拟机的初始状态，
+ * UNIX Domain Socket是在socket架构上发展起来的用于同一台主机的进程间通讯（IPC），它不需要经过网络协议栈，不需要打包拆包、计算校验和、维护序号和应答等，只是将应用层数据从一个进程拷贝到另一个进程。
  * Pre-initializes some classes, and then waits for commands on a UNIX domain
  * socket. Based on these commands, forks off child processes that inherit
  * the initial state of the VM.
@@ -538,6 +539,7 @@ public class ZygoteInit {
 
         /* For child process */
         if (pid == 0) {
+            //这段代码在fork出来的子进程运行，子进程和父进程共享代码空间,
             if (hasSecondZygote(abiList)) {
                 waitForSecondaryZygote(socketName);
             }
@@ -607,12 +609,15 @@ public class ZygoteInit {
             if (startSystemServer) {
                 startSystemServer(abiList, socketName);
             }
+            //父子进程共享代码空间，
 
+            //zygote进程仍然执行这个，
             Log.i(TAG, "Accepting command socket connections");
             runSelectLoop(abiList);
 
             closeServerSocket();
         } catch (MethodAndArgsCaller caller) {
+            //fork出来的systemServer进程执行这个，
             caller.run();
         } catch (RuntimeException ex) {
             Log.e(TAG, "Zygote died with exception", ex);

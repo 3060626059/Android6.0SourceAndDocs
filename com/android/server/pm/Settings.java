@@ -287,7 +287,9 @@ final class Settings {
 
     final ArrayMap<String, SharedUserSetting> mSharedUsers =
             new ArrayMap<String, SharedUserSetting>();
+    //里面的值有可能为空，索引是一个uid基于Process.FIRST_APPLICATION_UID的偏移量，值的类型是PackageSetting
     private final ArrayList<Object> mUserIds = new ArrayList<Object>();
+    //key是uid,值的类型是PackageSetting
     private final SparseArray<Object> mOtherUserIds =
             new SparseArray<Object>();
 
@@ -337,6 +339,7 @@ final class Settings {
     public final KeySetManagerService mKeySetManagerService = new KeySetManagerService(mPackages);
 
     Settings(Object lock) {
+        //Environment.getDataDirectory()------->   /data
         this(Environment.getDataDirectory(), lock);
     }
 
@@ -345,20 +348,21 @@ final class Settings {
 
         mRuntimePermissionsPersistence = new RuntimePermissionPersistence(mLock);
 
-        mSystemDir = new File(dataDir, "system");
+        mSystemDir = new File(dataDir, "system"); //  /data/system
         mSystemDir.mkdirs();
+        //设置文件权限，，
         FileUtils.setPermissions(mSystemDir.toString(),
                 FileUtils.S_IRWXU|FileUtils.S_IRWXG
                 |FileUtils.S_IROTH|FileUtils.S_IXOTH,
                 -1, -1);
-        mSettingsFilename = new File(mSystemDir, "packages.xml");
-        mBackupSettingsFilename = new File(mSystemDir, "packages-backup.xml");
-        mPackageListFilename = new File(mSystemDir, "packages.list");
+        mSettingsFilename = new File(mSystemDir, "packages.xml");  // /data/system/packages.xml
+        mBackupSettingsFilename = new File(mSystemDir, "packages-backup.xml"); //  /data/system/packages-backup.xml
+        mPackageListFilename = new File(mSystemDir, "packages.list"); //   /data/system/packages.list
         FileUtils.setPermissions(mPackageListFilename, 0640, SYSTEM_UID, PACKAGE_INFO_GID);
 
         // Deprecated: Needed for migration
-        mStoppedPackagesFilename = new File(mSystemDir, "packages-stopped.xml");
-        mBackupStoppedPackagesFilename = new File(mSystemDir, "packages-stopped-backup.xml");
+        mStoppedPackagesFilename = new File(mSystemDir, "packages-stopped.xml");  //   /data/system/packages-stopped.xml
+        mBackupStoppedPackagesFilename = new File(mSystemDir, "packages-stopped-backup.xml");  //   /data/system/packages-stopped-backup.xml
     }
 
     PackageSetting getPackageLPw(PackageParser.Package pkg, PackageSetting origPackage,
@@ -490,7 +494,7 @@ final class Settings {
         }
         return null;
     }
-
+    //先通过name查找SharedUserSetting
     SharedUserSetting addSharedUserLPw(String name, int uid, int pkgFlags, int pkgPrivateFlags) {
         SharedUserSetting s = mSharedUsers.get(name);
         if (s != null) {
@@ -503,6 +507,7 @@ final class Settings {
         }
         s = new SharedUserSetting(name, pkgFlags, pkgPrivateFlags);
         s.userId = uid;
+        //是否存在对应uid的记录，
         if (addUserIdLPw(uid, s, name)) {
             mSharedUsers.put(name, s);
             return s;
@@ -949,7 +954,7 @@ final class Settings {
         }
         mPackages.put(name, newp);
     }
-
+    //如果之前对于同一个uid已经添加过了，那么返回false，否则返回true,并且往mUserIds或者mOtherUserIds里面添加元素，
     private boolean addUserIdLPw(int uid, Object obj, Object name) {
         if (uid > Process.LAST_APPLICATION_UID) {
             return false;

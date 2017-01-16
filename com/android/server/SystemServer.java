@@ -326,6 +326,7 @@ public final class SystemServer {
         Installer installer = mSystemServiceManager.startService(Installer.class);
 
         // Activity manager runs the show.
+        //AMS服务，
         mActivityManagerService = mSystemServiceManager.startService(
                 ActivityManagerService.Lifecycle.class).getService();
         mActivityManagerService.setSystemServiceManager(mSystemServiceManager);
@@ -350,7 +351,7 @@ public final class SystemServer {
 
         // We need the default display before we can initialize the package manager.
         mSystemServiceManager.startBootPhase(SystemService.PHASE_WAIT_FOR_DEFAULT_DISPLAY);
-
+        //一般而言，mOnlyCore==false
         // Only run "core" apps if we're encrypting the device.
         String cryptState = SystemProperties.get("vold.decrypt");
         if (ENCRYPTING_STATE.equals(cryptState)) {
@@ -363,6 +364,7 @@ public final class SystemServer {
 
         // Start the package manager.
         Slog.i(TAG, "Package Manager");
+        // PMS
         mPackageManagerService = PackageManagerService.main(mSystemContext, installer,
                 mFactoryTestMode != FactoryTest.FACTORY_TEST_OFF, mOnlyCore);
         mFirstBoot = mPackageManagerService.isFirstBoot();

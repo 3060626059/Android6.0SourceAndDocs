@@ -468,7 +468,8 @@ public class PackageManagerService extends IPackageManager.Stub {
     final Object mInstallLock = new Object();
 
     // ----------------------------------------------------------------
-
+    //key是包名，value是Package,
+    //如果有方法调用的时候必须持有这个锁，那么这个方法是以LP开头的，
     // Keys are String (package name), values are Package.  This also serves
     // as the lock for the global state.  Methods that must be called with
     // this lock held have the prefix "LP".
@@ -496,7 +497,7 @@ public class PackageManagerService extends IPackageManager.Stub {
      */
     boolean mPromoteSystemApps;
 
-    final Settings mSettings;
+    final Settings mSettings; // 只有一个，
     boolean mRestoredSettings;
 
     // System configuration read by SystemConfig.
@@ -1762,6 +1763,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             boolean factoryTest, boolean onlyCore) {
         PackageManagerService m = new PackageManagerService(context, installer,
                 factoryTest, onlyCore);
+        //向ServiceManager注册服务，
         ServiceManager.addService("package", m);
         return m;
     }
@@ -1865,19 +1867,20 @@ public class PackageManagerService extends IPackageManager.Stub {
         synchronized (mInstallLock) {
         // writer
         synchronized (mPackages) {
+            //ServiceThread是HandlerThread的子类，带有消息循环功能，
             mHandlerThread = new ServiceThread(TAG,
                     Process.THREAD_PRIORITY_BACKGROUND, true /*allowIo*/);
             mHandlerThread.start();
             mHandler = new PackageHandler(mHandlerThread.getLooper());
             Watchdog.getInstance().addThread(mHandler, WATCHDOG_TIMEOUT);
 
-            File dataDir = Environment.getDataDirectory();
-            mAppDataDir = new File(dataDir, "data");
-            mAppInstallDir = new File(dataDir, "app");
-            mAppLib32InstallDir = new File(dataDir, "app-lib");
-            mAsecInternalPath = new File(dataDir, "app-asec").getPath();
-            mUserAppDataDir = new File(dataDir, "user");
-            mDrmAppPrivateInstallDir = new File(dataDir, "app-private");
+            File dataDir = Environment.getDataDirectory(); //  /data
+            mAppDataDir = new File(dataDir, "data");//      /data/data
+            mAppInstallDir = new File(dataDir, "app"); //   /data/app
+            mAppLib32InstallDir = new File(dataDir, "app-lib");//        /data/app-lib
+            mAsecInternalPath = new File(dataDir, "app-asec").getPath();//     /data/app-asec
+            mUserAppDataDir = new File(dataDir, "user");//      /data/user
+            mDrmAppPrivateInstallDir = new File(dataDir, "app-private");//     /data/app-private
 
             sUserManager = new UserManagerService(context, this,
                     mInstallLock, mPackages);
@@ -1989,7 +1992,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                     }
                 }
             }
-
+            //Environment.getRootDirectory()----->  /system
             File frameworkDir = new File(Environment.getRootDirectory(), "framework");
 
             // Gross hack for now: we know this file doesn't contain any
@@ -2054,6 +2057,13 @@ public class PackageManagerService extends IPackageManager.Stub {
                     }
                 }
             }
+            //scanDirLI函数来扫描移动设备上的下面这几个目录中的Apk文件，，，不同系统版本这些目录可能不一样，
+            //1.  /vendor/overlay
+            //2.  /system/framework
+            //3.  /system/pri-app
+            //4. /system/app
+            //5. /vendor/app
+
 
             // Collect vendor overlay packages.
             // (Do this before scanning any apps.)
@@ -2064,6 +2074,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                     | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags | SCAN_TRUSTED_OVERLAY, 0);
 
             // Find base frameworks (resource packages without code).
+            //只有资源没有代码，，
             scanDirLI(frameworkDir, PackageParser.PARSE_IS_SYSTEM
                     | PackageParser.PARSE_IS_SYSTEM_DIR
                     | PackageParser.PARSE_IS_PRIVILEGED,
@@ -5572,7 +5583,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             Log.d(TAG, "No files in app dir " + dir);
             return;
         }
-
+        //扫描指定目录下的apk文件，
         if (DEBUG_PACKAGE_SCANNING) {
             Log.d(TAG, "Scanning app dir " + dir + " scanFlags=" + scanFlags
                     + " flags=0x" + Integer.toHexString(parseFlags));
@@ -5634,7 +5645,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         } catch (java.io.IOException e) {
         }
     }
-
+    //收集证书，
     private void collectCertificatesLI(PackageParser pp, PackageSetting ps,
             PackageParser.Package pkg, File srcFile, int parseFlags)
             throws PackageManagerException {
@@ -5673,7 +5684,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         }
     }
 
-    /*
+    /*扫描包，
      *  Scan a package and return the newly parsed package.
      *  Returns null in case of errors and the error code is stored in mLastScanError
      */
@@ -5692,6 +5703,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
         final PackageParser.Package pkg;
         try {
+            //解析apk的AndroidManifest文件，
             pkg = pp.parsePackage(scanFile, parseFlags);
         } catch (PackageParserException e) {
             throw PackageManagerException.from(e);

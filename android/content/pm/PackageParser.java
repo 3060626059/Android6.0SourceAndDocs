@@ -84,7 +84,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.StrictJarFile;
 import java.util.zip.ZipEntry;
 
-/**
+/**单apk,还有一种聚集型apk---多个apk文件，这些apk需要满足一些条件，比如相同包名，相同签名，相同versionCode
  * Parser for package files (APKs) on disk. This supports apps packaged either
  * as a single "monolithic" APK, or apps packaged as a "cluster" of multiple
  * APKs in a single directory.
@@ -372,11 +372,11 @@ public class PackageParser {
     public void setDisplayMetrics(DisplayMetrics metrics) {
         mMetrics = metrics;
     }
-
+    //是否是apk文件
     public static final boolean isApkFile(File file) {
         return isApkPath(file.getName());
     }
-
+    //是否是apk文件
     private static boolean isApkPath(String path) {
         return path.endsWith(".apk");
     }
@@ -735,7 +735,7 @@ public class PackageParser {
                 splitRevisionCodes);
     }
 
-    /**
+    /**解析apk文件，
      * Parse the package at the given location. Automatically detects if the
      * package is a monolithic style (single APK file) or cluster style
      * (directory of APKs).
@@ -751,8 +751,10 @@ public class PackageParser {
      */
     public Package parsePackage(File packageFile, int flags) throws PackageParserException {
         if (packageFile.isDirectory()) {
+            //包含apk文件的目录
             return parseClusterPackage(packageFile, flags);
         } else {
+            //单个apk文件
             return parseMonolithicPackage(packageFile, flags);
         }
     }
@@ -813,7 +815,7 @@ public class PackageParser {
         }
     }
 
-    /**
+    /**这里不做签名验证，
      * Parse the given APK file, treating it as as a single monolithic package.
      * <p>
      * Note that this <em>does not</em> perform signature verification; that
@@ -826,6 +828,7 @@ public class PackageParser {
     @Deprecated
     public Package parseMonolithicPackage(File apkFile, int flags) throws PackageParserException {
         if (mOnlyCoreApps) {
+            //一般而言，不满足，
             final PackageLite lite = parseMonolithicPackageLite(apkFile, flags);
             if (!lite.coreApp) {
                 throw new PackageParserException(INSTALL_PARSE_FAILED_MANIFEST_MALFORMED,
@@ -835,14 +838,16 @@ public class PackageParser {
 
         final AssetManager assets = new AssetManager();
         try {
+            //利用AssetManager解析这个apk的AndroidManifest文件，
             final Package pkg = parseBaseApk(apkFile, assets, flags);
+            //codePath保存的是apk文件的路径*******************************************************
             pkg.codePath = apkFile.getAbsolutePath();
             return pkg;
         } finally {
             IoUtils.closeQuietly(assets);
         }
     }
-
+    //把apk文件加载到AssetManager，，而且这个AssetManager是直接new出来的，，，
     private static int loadApkIntoAssetManager(AssetManager assets, String apkPath, int flags)
             throws PackageParserException {
         if ((flags & PARSE_MUST_BE_APK) != 0 && !isApkPath(apkPath)) {
@@ -860,13 +865,14 @@ public class PackageParser {
         }
         return cookie;
     }
-
+    //利用AssetManager解析apk的AndroidManifest文件
     private Package parseBaseApk(File apkFile, AssetManager assets, int flags)
             throws PackageParserException {
         final String apkPath = apkFile.getAbsolutePath();
 
         String volumeUuid = null;
         if (apkPath.startsWith(MNT_EXPAND)) {
+            //一般不满足，
             final int end = apkPath.indexOf('/', MNT_EXPAND.length());
             volumeUuid = apkPath.substring(MNT_EXPAND.length(), end);
         }
@@ -887,6 +893,7 @@ public class PackageParser {
             parser = assets.openXmlResourceParser(cookie, ANDROID_MANIFEST_FILENAME);
 
             final String[] outError = new String[1];
+            //解析AndroidManifest.xml文件
             final Package pkg = parseBaseApk(res, parser, flags, outError);
             if (pkg == null) {
                 throw new PackageParserException(mParseError,
@@ -1195,7 +1202,7 @@ public class PackageParser {
             IoUtils.closeQuietly(assets);
         }
     }
-
+    //验证应用程序包名合法性
     private static String validateName(String name, boolean requireSeparator,
             boolean requireFilename) {
         final int N = name.length();
@@ -1225,7 +1232,8 @@ public class PackageParser {
         return hasSep || !requireSeparator
                 ? null : "must have at least one '.' separator";
     }
-
+    //xml的pull解析方式，只解析了manifest的package和split属性，
+    //返回值Pair.first保存包名package，Pair.second表示split
     private static Pair<String, String> parsePackageSplitNames(XmlPullParser parser,
             AttributeSet attrs, int flags) throws IOException, XmlPullParserException,
             PackageParserException {
@@ -1240,19 +1248,21 @@ public class PackageParser {
                     "No start tag found");
         }
         if (!parser.getName().equals("manifest")) {
+
             throw new PackageParserException(INSTALL_PARSE_FAILED_MANIFEST_MALFORMED,
                     "No <manifest> tag");
         }
-
+        //manifest标签的package属性，，这个是应用的包名，
         final String packageName = attrs.getAttributeValue(null, "package");
         if (!"android".equals(packageName)) {
+            //一般都要验证这一步，验证应用程序包名的合法性，
             final String error = validateName(packageName, true, true);
             if (error != null) {
                 throw new PackageParserException(INSTALL_PARSE_FAILED_BAD_PACKAGE_NAME,
                         "Invalid manifest package: " + error);
             }
         }
-
+        //manifest标签的split属性，，
         String splitName = attrs.getAttributeValue(null, "split");
         if (splitName != null) {
             if (splitName.length() == 0) {
@@ -1344,7 +1354,7 @@ public class PackageParser {
         return new Signature(sig);
     }
 
-    /**
+    /**解析AndroidManifest.xml文件，返回一个解析完AndroidManifest文件后的Package对象，
      * Parse the manifest of a <em>base APK</em>.
      * <p>
      * When adding new features, carefully consider if they should also be
@@ -1364,6 +1374,7 @@ public class PackageParser {
         final String pkgName;
         final String splitName;
         try {
+            //返回值Pair.first保存包名package，Pair.second表示split
             Pair<String, String> packageSplit = parsePackageSplitNames(parser, attrs, flags);
             pkgName = packageSplit.first;
             splitName = packageSplit.second;
@@ -1379,21 +1390,24 @@ public class PackageParser {
             mParseError = PackageManager.INSTALL_PARSE_FAILED_BAD_PACKAGE_NAME;
             return null;
         }
-
+        //pkgName应用程序包名
         final Package pkg = new Package(pkgName);
         boolean foundApp = false;
 
         TypedArray sa = res.obtainAttributes(attrs,
                 com.android.internal.R.styleable.AndroidManifest);
+        //versionCode
         pkg.mVersionCode = pkg.applicationInfo.versionCode = sa.getInteger(
                 com.android.internal.R.styleable.AndroidManifest_versionCode, 0);
         pkg.baseRevisionCode = sa.getInteger(
                 com.android.internal.R.styleable.AndroidManifest_revisionCode, 0);
+        //versionName
         pkg.mVersionName = sa.getNonConfigurationString(
                 com.android.internal.R.styleable.AndroidManifest_versionName, 0);
         if (pkg.mVersionName != null) {
             pkg.mVersionName = pkg.mVersionName.intern();
         }
+        //sharedUserId
         String str = sa.getNonConfigurationString(
                 com.android.internal.R.styleable.AndroidManifest_sharedUserId, 0);
         if (str != null && str.length() > 0) {
@@ -1408,14 +1422,14 @@ public class PackageParser {
             pkg.mSharedUserLabel = sa.getResourceId(
                     com.android.internal.R.styleable.AndroidManifest_sharedUserLabel, 0);
         }
-
+        //安装位置
         pkg.installLocation = sa.getInteger(
                 com.android.internal.R.styleable.AndroidManifest_installLocation,
                 PARSE_DEFAULT_INSTALL_LOCATION);
         pkg.applicationInfo.installLocation = pkg.installLocation;
 
         pkg.coreApp = attrs.getAttributeBooleanValue(null, "coreApp", false);
-
+        // 上面都是manifest标签的属性，
         sa.recycle();
 
         /* Set the global "forward lock" flag */
@@ -1437,6 +1451,7 @@ public class PackageParser {
         int anyDensity = 1;
         
         int outerDepth = parser.getDepth();
+        //解析剩下的标签，
         while ((type = parser.next()) != XmlPullParser.END_DOCUMENT
                 && (type != XmlPullParser.END_TAG || parser.getDepth() > outerDepth)) {
             if (type == XmlPullParser.END_TAG || type == XmlPullParser.TEXT) {
@@ -1503,6 +1518,7 @@ public class PackageParser {
                     return null;
                 }
             } else if (tagName.equals("uses-permission")) {
+                //使用了哪些权限，，，
                 if (!parseUsesPermission(pkg, res, parser, attrs)) {
                     return null;
                 }
@@ -4406,7 +4422,7 @@ public class PackageParser {
         public Package(String packageName) {
             this.packageName = packageName;
             applicationInfo.packageName = packageName;
-            applicationInfo.uid = -1;
+            applicationInfo.uid = -1; //这个对方保存的uid=-1****************************************************
         }
 
         public List<String> getAllCodePaths() {
