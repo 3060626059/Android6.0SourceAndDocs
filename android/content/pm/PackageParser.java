@@ -283,8 +283,8 @@ public class PackageParser {
             this.installLocation = baseApk.installLocation;
             this.verifiers = baseApk.verifiers;
             this.splitNames = splitNames;
-            this.codePath = codePath;
-            this.baseCodePath = baseApk.codePath;
+            this.codePath = codePath;  //codePath类似于/data/app/com.canzhexue.demo-1
+            this.baseCodePath = baseApk.codePath;//baseCodePath/data/app/com.canzhexue.demo-1/demo.apk
             this.splitCodePaths = splitCodePaths;
             this.baseRevisionCode = baseApk.revisionCode;
             this.splitRevisionCodes = splitRevisionCodes;
@@ -660,7 +660,7 @@ public class PackageParser {
         final String packagePath = packageFile.getAbsolutePath();
         return new PackageLite(packagePath, baseApk, null, null, null);
     }
-
+    //扫描指定目录，如果是系统扫描/data/app/xxx目录的话，flags=PackageParser.PARSE_MUST_BE_APK
     private static PackageLite parseClusterPackageLite(File packageDir, int flags)
             throws PackageParserException {
         final File[] files = packageDir.listFiles();
@@ -671,7 +671,9 @@ public class PackageParser {
 
         String packageName = null;
         int versionCode = 0;
-
+        //如果有多个apk,必须满足几个条件
+        //1.包名一样，
+        //2.versionCode一样，
         final ArrayMap<String, ApkLite> apks = new ArrayMap<>();
         for (File file : files) {
             if (isApkFile(file)) {
@@ -683,11 +685,13 @@ public class PackageParser {
                     packageName = lite.packageName;
                     versionCode = lite.versionCode;
                 } else {
+                    //包名要一致，
                     if (!packageName.equals(lite.packageName)) {
                         throw new PackageParserException(INSTALL_PARSE_FAILED_BAD_MANIFEST,
                                 "Inconsistent package " + lite.packageName + " in " + file
                                 + "; expected " + packageName);
                     }
+                    //versionCode要一致，
                     if (versionCode != lite.versionCode) {
                         throw new PackageParserException(INSTALL_PARSE_FAILED_BAD_MANIFEST,
                                 "Inconsistent version " + lite.versionCode + " in " + file
@@ -697,13 +701,14 @@ public class PackageParser {
 
                 // Assert that each split is defined only once
                 if (apks.put(lite.splitName, lite) != null) {
+                    //多个apk里面同一个splitName的值不能相同，
                     throw new PackageParserException(INSTALL_PARSE_FAILED_BAD_MANIFEST,
                             "Split name " + lite.splitName
                             + " defined more than once; most recent was " + file);
                 }
             }
         }
-
+        //baseApk的splitName不能设置，其他的apk必须设置，而且还不能相同，，，
         final ApkLite baseApk = apks.remove(null);
         if (baseApk == null) {
             throw new PackageParserException(INSTALL_PARSE_FAILED_BAD_MANIFEST,
@@ -717,6 +722,7 @@ public class PackageParser {
         String[] splitCodePaths = null;
         int[] splitRevisionCodes = null;
         if (size > 0) {
+            //对于一般的apk这个条件不满足，因为packageDir下面只有一个apk,
             splitNames = new String[size];
             splitCodePaths = new String[size];
             splitRevisionCodes = new int[size];
@@ -729,13 +735,14 @@ public class PackageParser {
                 splitRevisionCodes[i] = apks.get(splitNames[i]).revisionCode;
             }
         }
-
+        //codePath不是特定apk的路径，而是/data/app/com.canmeizhexue.demo-1这样的，
+        //splitCodePaths里面表示其他apk的路径，可能为null
         final String codePath = packageDir.getAbsolutePath();
         return new PackageLite(codePath, baseApk, splitNames, splitCodePaths,
                 splitRevisionCodes);
     }
 
-    /**解析apk文件，
+    /**解析apk文件，packageFile可能是一个目录，类似于/data/app/com.canmeizhexue.demo-1
      * Parse the package at the given location. Automatically detects if the
      * package is a monolithic style (single APK file) or cluster style
      * (directory of APKs).
@@ -751,7 +758,7 @@ public class PackageParser {
      */
     public Package parsePackage(File packageFile, int flags) throws PackageParserException {
         if (packageFile.isDirectory()) {
-            //包含apk文件的目录
+            //包含apk文件的目录,,,系统扫描用户安装的app的时候走的是这个，packageFile里面有apk文件，
             return parseClusterPackage(packageFile, flags);
         } else {
             //单个apk文件
@@ -759,7 +766,7 @@ public class PackageParser {
         }
     }
 
-    /**
+    /**解析指定目录下面的所有apk,这些apk要满足一定的条件，但是这个函数不会做签名验证，
      * Parse all APKs contained in the given directory, treating them as a
      * single package. This also performs sanity checking, such as requiring
      * identical package name and version codes, a single base APK, and unique
@@ -769,6 +776,7 @@ public class PackageParser {
      * must be done separately in {@link #collectCertificates(Package, int)}.
      */
     private Package parseClusterPackage(File packageDir, int flags) throws PackageParserException {
+        //解析packageDir目录下的所有apk,这个只解析了一点点信息，
         final PackageLite lite = parseClusterPackageLite(packageDir, 0);
 
         if (mOnlyCoreApps && !lite.coreApp) {
@@ -777,18 +785,21 @@ public class PackageParser {
         }
 
         final AssetManager assets = new AssetManager();
+        //直接构造AssetManager，并没有设置Configuration信息
         try {
             // Load the base and all splits into the AssetManager
             // so that resources can be overriden when parsing the manifests.
             loadApkIntoAssetManager(assets, lite.baseCodePath, flags);
 
             if (!ArrayUtils.isEmpty(lite.splitCodePaths)) {
+                //splitCodePaths代表其他apk的路径，不过一般都是null
                 for (String path : lite.splitCodePaths) {
                     loadApkIntoAssetManager(assets, path, flags);
                 }
             }
 
             final File baseApk = new File(lite.baseCodePath);
+            //解析这个目录里面主apk
             final Package pkg = parseBaseApk(baseApk, assets, flags);
             if (pkg == null) {
                 throw new PackageParserException(INSTALL_PARSE_FAILED_NOT_APK,
@@ -796,6 +807,7 @@ public class PackageParser {
             }
 
             if (!ArrayUtils.isEmpty(lite.splitNames)) {
+                //一般情况下这个不满足，，，，
                 final int num = lite.splitNames.length;
                 pkg.splitNames = lite.splitNames;
                 pkg.splitCodePaths = lite.splitCodePaths;
@@ -807,7 +819,7 @@ public class PackageParser {
                     parseSplitApk(pkg, i, assets, flags);
                 }
             }
-
+            //最终的codePath保存的是类似于/data/app/com.canmeizhexue.demo-1这种的目录
             pkg.codePath = packageDir.getAbsolutePath();
             return pkg;
         } finally {
@@ -1150,7 +1162,7 @@ public class PackageParser {
         return res;
     }
 
-    /**
+    /**针对单个apk文件通过AssetManager解析AndroidManifest文件
      * Utility method that retrieves lightweight details about a single APK
      * file, including package name, split name, and install location.
      *
@@ -1165,7 +1177,9 @@ public class PackageParser {
         AssetManager assets = null;
         XmlResourceParser parser = null;
         try {
+            // 直接构造AssetManager
             assets = new AssetManager();
+            //
             assets.setConfiguration(0, 0, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     Build.VERSION.RESOURCES_SDK_INT);
 
@@ -1183,6 +1197,7 @@ public class PackageParser {
 
             final Signature[] signatures;
             if ((flags & PARSE_COLLECT_CERTIFICATES) != 0) {
+                //系统扫描第三方app目录（/data/app/com.canmeizhexue.demo-1）时没有这个标记，所以不会执行这个，
                 // TODO: factor signature related items out of Package object
                 final Package tempPkg = new Package(null);
                 collectCertificates(tempPkg, apkFile, 0);
@@ -1192,6 +1207,8 @@ public class PackageParser {
             }
 
             final AttributeSet attrs = parser;
+            //apkPath表示，这个apk文件的路径，
+            //
             return parseApkLite(apkPath, res, parser, attrs, flags, signatures);
 
         } catch (XmlPullParserException | IOException | RuntimeException e) {
@@ -1279,10 +1296,11 @@ public class PackageParser {
         return Pair.create(packageName.intern(),
                 (splitName != null) ? splitName.intern() : splitName);
     }
-
+    //构造ApkLite对象，
     private static ApkLite parseApkLite(String codePath, Resources res, XmlPullParser parser,
             AttributeSet attrs, int flags, Signature[] signatures) throws IOException,
             XmlPullParserException, PackageParserException {
+        //splitName在第二个字段，
         final Pair<String, String> packageSplit = parsePackageSplitNames(parser, attrs, flags);
 
         int installLocation = PARSE_DEFAULT_INSTALL_LOCATION;
@@ -1318,6 +1336,7 @@ public class PackageParser {
             }
 
             if (parser.getDepth() == searchDepth && "package-verifier".equals(parser.getName())) {
+                //解析package-verifier标签
                 final VerifierInfo verifier = parseVerifier(res, parser, attrs, flags);
                 if (verifier != null) {
                     verifiers.add(verifier);
@@ -1325,9 +1344,11 @@ public class PackageParser {
             }
 
             if (parser.getDepth() == searchDepth && "application".equals(parser.getName())) {
+                //解析application标签
                 for (int i = 0; i < attrs.getAttributeCount(); ++i) {
                     final String attr = attrs.getAttributeName(i);
                     if ("multiArch".equals(attr)) {
+                        //解析application标签的multiArch属性
                         multiArch = attrs.getAttributeBooleanValue(i, false);
                     }
                     if ("extractNativeLibs".equals(attr)) {
@@ -4308,7 +4329,7 @@ public class PackageParser {
 
         // For now we only support one application per package.
         public final ApplicationInfo applicationInfo = new ApplicationInfo();
-
+        //定义的权限
         public final ArrayList<Permission> permissions = new ArrayList<Permission>(0);
         public final ArrayList<PermissionGroup> permissionGroups = new ArrayList<PermissionGroup>(0);
         public final ArrayList<Activity> activities = new ArrayList<Activity>(0);
@@ -4316,7 +4337,7 @@ public class PackageParser {
         public final ArrayList<Provider> providers = new ArrayList<Provider>(0);
         public final ArrayList<Service> services = new ArrayList<Service>(0);
         public final ArrayList<Instrumentation> instrumentation = new ArrayList<Instrumentation>(0);
-
+        //请求的权限，，，
         public final ArrayList<String> requestedPermissions = new ArrayList<String>();
 
         public ArrayList<String> protectedBroadcasts;
@@ -4715,10 +4736,11 @@ public class PackageParser {
                 + " " + info.name + "}";
         }
     }
-
+    //判断是否需要复制ApplicationInfo
     private static boolean copyNeeded(int flags, Package p,
             PackageUserState state, Bundle metaData, int userId) {
         if (userId != UserHandle.USER_OWNER) {
+            //目前一般都是单用户系统，所以这个地方不满足，android4.2加入了多用户支持，不过一般只支持平板
             // We always need to copy for other users, since we need
             // to fix up the uid.
             return true;
@@ -4745,12 +4767,12 @@ public class PackageParser {
         }
         return false;
     }
-
+    //获取应用程序信息，
     public static ApplicationInfo generateApplicationInfo(Package p, int flags,
             PackageUserState state) {
         return generateApplicationInfo(p, flags, state, UserHandle.getCallingUserId());
     }
-
+    //根据flags和state来更新ApplicationInfo
     private static void updateApplicationInfo(ApplicationInfo ai, int flags,
             PackageUserState state) {
         // CompatibilityMode is global state.
@@ -4768,16 +4790,19 @@ public class PackageParser {
             ai.privateFlags &= ~ApplicationInfo.PRIVATE_FLAG_HIDDEN;
         }
         if (state.enabled == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
+            //组件可用状态，
             ai.enabled = true;
         } else if (state.enabled == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED) {
+            //当前不可用，如果要求要用了，再变成可用，
             ai.enabled = (flags&PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS) != 0;
         } else if (state.enabled == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
                 || state.enabled == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER) {
+            //不可用，
             ai.enabled = false;
         }
         ai.enabledSetting = state.enabled;
     }
-
+    //userId代表发起这个请求的进程的U
     public static ApplicationInfo generateApplicationInfo(Package p, int flags,
             PackageUserState state, int userId) {
         if (p == null) return null;
@@ -4797,7 +4822,7 @@ public class PackageParser {
             updateApplicationInfo(p.applicationInfo, flags, state);
             return p.applicationInfo;
         }
-
+        //浅复制，
         // Make shallow copy so we can store the metadata/libraries safely
         ApplicationInfo ai = new ApplicationInfo(p.applicationInfo);
         ai.uid = UserHandle.getUid(userId, ai.uid);
@@ -4807,9 +4832,11 @@ public class PackageParser {
             ai.metaData = p.mAppMetaData;
         }
         if ((flags & PackageManager.GET_SHARED_LIBRARY_FILES) != 0) {
+            //共享库的目录，
             ai.sharedLibraryFiles = p.usesLibraryFiles;
         }
         if (state.stopped) {
+            //这个应用程序的当前状态，
             ai.flags |= ApplicationInfo.FLAG_STOPPED;
         } else {
             ai.flags &= ~ApplicationInfo.FLAG_STOPPED;
@@ -4885,7 +4912,7 @@ public class PackageParser {
             return sb.toString();
         }
     }
-
+    // 对于手机而言，目前userId都是0，只支持单用户，
     public static final ActivityInfo generateActivityInfo(Activity a, int flags,
             PackageUserState state, int userId) {
         if (a == null) return null;
@@ -4898,6 +4925,7 @@ public class PackageParser {
         // Make shallow copies so we can store the metadata safely
         ActivityInfo ai = new ActivityInfo(a.info);
         ai.metaData = a.metaData;
+        //生成ApplicationInfo
         ai.applicationInfo = generateApplicationInfo(a.owner, flags, state, userId);
         return ai;
     }

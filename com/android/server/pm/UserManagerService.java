@@ -156,8 +156,8 @@ public class UserManagerService extends IUserManager.Stub {
 
     private final Handler mHandler;
 
-    private final File mUsersDir;
-    private final File mUserListFile;
+    private final File mUsersDir; // /data/system/users
+    private final File mUserListFile;  // /data/system/users/userlist.xml
 
     private final SparseArray<UserInfo> mUsers = new SparseArray<UserInfo>();
     private final SparseArray<Bundle> mUserRestrictions = new SparseArray<Bundle>();
@@ -201,6 +201,7 @@ public class UserManagerService extends IUserManager.Stub {
         this(context, pm, installLock, packagesLock,
                 Environment.getDataDirectory(),
                 new File(Environment.getDataDirectory(), "user"));
+        //  /data/user
     }
 
     /**
@@ -216,7 +217,8 @@ public class UserManagerService extends IUserManager.Stub {
         mHandler = new MainHandler();
         synchronized (mInstallLock) {
             synchronized (mPackagesLock) {
-                mUsersDir = new File(dataDir, USER_INFO_DIR);
+                //  dataDir=/data
+                mUsersDir = new File(dataDir, USER_INFO_DIR);  //  /data/system/users
                 mUsersDir.mkdirs();
                 // Make zeroth user directory, for services to migrate their files to that location
                 File userZeroDir = new File(mUsersDir, "0");
@@ -225,7 +227,7 @@ public class UserManagerService extends IUserManager.Stub {
                         FileUtils.S_IRWXU|FileUtils.S_IRWXG
                         |FileUtils.S_IROTH|FileUtils.S_IXOTH,
                         -1, -1);
-                mUserListFile = new File(mUsersDir, USER_LIST_FILENAME);
+                mUserListFile = new File(mUsersDir, USER_LIST_FILENAME);  // /data/system/users/userlist.xml
                 initDefaultGuestRestrictions();
                 readUserListLocked();
                 sInstance = this;
@@ -715,6 +717,7 @@ public class UserManagerService extends IUserManager.Stub {
 
     private void readUserListLocked() {
         if (!mUserListFile.exists()) {
+            //文件不存在
             fallbackToSingleUserLocked();
             return;
         }

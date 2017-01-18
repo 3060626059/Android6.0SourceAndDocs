@@ -781,7 +781,7 @@ public class Process {
         return Os.gettid();
     }
 
-    /**
+    /**当前进程的uid,
      * Returns the identifier of this process's uid.  This is the kernel uid
      * that the process is running under, which is the identity of its
      * app-specific sandbox.  It is different from {@link #myUserHandle} in that
@@ -791,7 +791,8 @@ public class Process {
         return Os.getuid();
     }
 
-    /**
+    /**表示特定用户，同一个用户可以有多个不同的app运行，并且这些app有自己的uid,,这些uid是内核uid,这些uid也有特定的特点，
+     * 从这些uid里面可以提取出相同的userid
      * Returns this process's user handle.  This is the
      * user the process is running under.  It is distinct from
      * {@link #myUid()} in that a particular user will have multiple

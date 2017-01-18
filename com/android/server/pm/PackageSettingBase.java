@@ -103,6 +103,7 @@ abstract class PackageSettingBase extends SettingBase {
 
     // Whether this package is currently stopped, thus can not be
     // started until explicitly launched by the user.
+    //key是userid,不同用户有不同的PackageUserState
     private final SparseArray<PackageUserState> userState = new SparseArray<PackageUserState>();
 
     int installStatus = PKG_INSTALL_COMPLETE;
@@ -338,7 +339,7 @@ abstract class PackageSettingBase extends SettingBase {
     void setBlockUninstall(boolean blockUninstall, int userId) {
         modifyUserState(userId).blockUninstall = blockUninstall;
     }
-
+    //针对不同用户设置这个app的状态，比如默认是否是停止状态，是否隐藏等，
     void setUserState(int userId, int enabled, boolean installed, boolean stopped,
             boolean notLaunched, boolean hidden,
             String lastDisableAppCaller, ArraySet<String> enabledComponents,

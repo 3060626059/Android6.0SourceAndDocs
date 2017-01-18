@@ -225,6 +225,7 @@ public final class ActivityThread {
     // These LoadedApk are only valid for the userId that we're running as.
     final ArrayMap<String, WeakReference<LoadedApk>> mPackages
             = new ArrayMap<String, WeakReference<LoadedApk>>();
+    //key是包名，可以构造不是自己App的LoadedApk对象，apk完全是别人的都可以构造，
     final ArrayMap<String, WeakReference<LoadedApk>> mResourcePackages
             = new ArrayMap<String, WeakReference<LoadedApk>>();
     final ArrayList<ActivityClientRecord> mRelaunchingActivities

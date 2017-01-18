@@ -520,7 +520,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             apk = _apk;
         }
     }
-
+    //key也是包名
     // Currently known shared libraries.
     final ArrayMap<String, SharedLibraryEntry> mSharedLibraries =
             new ArrayMap<String, SharedLibraryEntry>();
@@ -528,19 +528,20 @@ public class PackageManagerService extends IPackageManager.Stub {
     // All available activities, for your resolving pleasure.
     final ActivityIntentResolver mActivities =
             new ActivityIntentResolver();
-
+    //所有的静态注册的广播
     // All available receivers, for your resolving pleasure.
     final ActivityIntentResolver mReceivers =
             new ActivityIntentResolver();
-
+    //保存所有的Service信息
     // All available services, for your resolving pleasure.
     final ServiceIntentResolver mServices = new ServiceIntentResolver();
-
+    //这个里面对于同一个provider只会保存一份，
     // All available providers, for your resolving pleasure.
     final ProviderIntentResolver mProviders = new ProviderIntentResolver();
 
     // Mapping from provider base names (first directory in content URI codePath)
     // to the provider information.
+    //key是权限，，，如果一个Provider有多个权限的话，这里会保存多份Provider
     final ArrayMap<String, PackageParser.Provider> mProvidersByAuthority =
             new ArrayMap<String, PackageParser.Provider>();
 
@@ -2058,11 +2059,11 @@ public class PackageManagerService extends IPackageManager.Stub {
                 }
             }
             //scanDirLI函数来扫描移动设备上的下面这几个目录中的Apk文件，，，不同系统版本这些目录可能不一样，
-            //1.  /vendor/overlay
-            //2.  /system/framework
-            //3.  /system/pri-app
-            //4. /system/app
-            //5. /vendor/app
+            //1.  /vendor/overlay    --不一定有这个目录
+            //2.  /system/framework   ----------这个里面发现很多jar包，没发现apk
+            //3.  /system/priv-app   ---没有发现直接的apk文件，但是有/system/priv-app/Contacts/Contacts.apk
+            //4. /system/app  ---没有发现直接的apk文件，但是有/system/app/Browser/Browser.apk
+            //5. /vendor/app ------不一定有这个目录
 
 
             // Collect vendor overlay packages.
@@ -2179,6 +2180,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             if (!mOnlyCore) {
                 EventLog.writeEvent(EventLogTags.BOOT_PROGRESS_PMS_DATA_SCAN_START,
                         SystemClock.uptimeMillis());
+                //扫描 /data/app目录，一般第三方应用程序安装在这个目录里面*************************************************************
                 scanDirLI(mAppInstallDir, 0, scanFlags | SCAN_REQUIRE_KNOWN, 0);
 
                 scanDirLI(mDrmAppPrivateInstallDir, PackageParser.PARSE_FORWARD_LOCK,
@@ -2895,9 +2897,10 @@ public class PackageManagerService extends IPackageManager.Stub {
         }
         return null;
     }
-
+    //参数userId表示发起这个请求的进程的userId,而不是目标packageName对应的userId,,当然如果发起请求的进程的包名是packageName，那他们代表同一个，不过一般不是同一个，，
     @Override
     public ApplicationInfo getApplicationInfo(String packageName, int flags, int userId) {
+        //不存在，直接返回，
         if (!sUserManager.exists(userId)) return null;
         enforceCrossUserPermission(Binder.getCallingUid(), userId, false, false, "get application info");
         // writer
@@ -3254,6 +3257,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         if (checkShell) {
             enforceShellRestriction(UserManager.DISALLOW_DEBUGGING_FEATURES, callingUid, userId);
         }
+        //一般直接满足这个条件，
         if (userId == UserHandle.getUserId(callingUid)) return;
         if (callingUid != Process.SYSTEM_UID && callingUid != 0) {
             if (requireFullPermission) {
@@ -5576,7 +5580,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         }
         return true;
     }
-
+    //扫描指定目录，解析apk文件，
     private void scanDirLI(File dir, int parseFlags, int scanFlags, long currentTime) {
         final File[] files = dir.listFiles();
         if (ArrayUtils.isEmpty(files)) {
@@ -5597,6 +5601,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                 continue;
             }
             try {
+                //扫描指定目录，
                 scanPackageLI(file, parseFlags | PackageParser.PARSE_MUST_BE_APK,
                         scanFlags, currentTime, null);
             } catch (PackageManagerException e) {
@@ -5694,7 +5699,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         parseFlags |= mDefParseFlags;
         PackageParser pp = new PackageParser();
         pp.setSeparateProcesses(mSeparateProcesses);
-        pp.setOnlyCoreApps(mOnlyCore);
+        pp.setOnlyCoreApps(mOnlyCore); // mOnlyCore 一般是false,
         pp.setDisplayMetrics(mMetrics);
 
         if ((scanFlags & SCAN_TRUSTED_OVERLAY) != 0) {
@@ -5703,7 +5708,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
         final PackageParser.Package pkg;
         try {
-            //解析apk的AndroidManifest文件，
+            //解析apk的AndroidManifest文件，得到Package
             pkg = pp.parsePackage(scanFile, parseFlags);
         } catch (PackageParserException e) {
             throw PackageManagerException.from(e);
@@ -5715,21 +5720,26 @@ public class PackageManagerService extends IPackageManager.Stub {
         synchronized (mPackages) {
             // Look to see if we already know about this package.
             String oldName = mSettings.mRenamedPackages.get(pkg.packageName);
+
             if (pkg.mOriginalPackages != null && pkg.mOriginalPackages.contains(oldName)) {
+                //需要AndroidManifest里面配置了original-package标签，一般不会有，
                 // This package has been renamed to its original name.  Let's
                 // use that.
                 ps = mSettings.peekPackageLPr(oldName);
             }
             // If there was no original package, see one for the real package name.
             if (ps == null) {
+                //第一次的时候，下面这句话应该也返回null
                 ps = mSettings.peekPackageLPr(pkg.packageName);
             }
             // Check to see if this package could be hiding/updating a system
             // package.  Must look for it either under the original or real
             // package name depending on our state.
+            //下面这个一般也返回null
             updatedPkg = mSettings.getDisabledSystemPkgLPr(ps != null ? ps.name : pkg.packageName);
             if (DEBUG_INSTALL && updatedPkg != null) Slog.d(TAG, "updatedPkg = " + updatedPkg);
         }
+        //对于扫描/data/app/com.canmeizhexue.demo-1这样的情况，ps和updatedPkg一般都是null
         boolean updatedPkgBetter = false;
         // First check if this is a system package that may involve an update
         if (updatedPkg != null && (parseFlags&PackageParser.PARSE_IS_SYSTEM) != 0) {
@@ -5808,14 +5818,15 @@ public class PackageManagerService extends IPackageManager.Stub {
                 parseFlags |= PackageParser.PARSE_IS_PRIVILEGED;
             }
         }
-
+        //验证证书，//对于扫描/data/app/com.canmeizhexue.demo-1这样的情况，ps和updatedPkg一般都是null***********************暂时不看********************************
         // Verify certificates against what was last scanned
         collectCertificatesLI(pp, ps, pkg, scanFile, parseFlags);
 
-        /*
+        /*新的系统app出现，但是之前有一个同名的非系统app,
          * A new system app appeared, but we already had a non-system one of the
          * same name installed earlier.
          */
+        //对于扫描/data/app/com.canmeizhexue.demo-1这样的情况， parseFlags不会有PARSE_IS_SYSTEM_DIR标记
         boolean shouldHideSystemApp = false;
         if (updatedPkg == null && ps != null
                 && (parseFlags & PackageParser.PARSE_IS_SYSTEM_DIR) != 0 && !isSystemApp(ps)) {
@@ -5858,7 +5869,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                 }
             }
         }
-
+        //对于扫描/data/app/com.canmeizhexue.demo-1这样的情况，ps==null
         // The apk is forward locked (not public) if its code and resources
         // are kept in different files. (except for app in either system or
         // vendor path).
@@ -5872,6 +5883,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         // TODO: extend to support forward-locked splits
         String resourcePath = null;
         String baseResourcePath = null;
+        //对于扫描/data/app/com.canmeizhexue.demo-1这样的情况，不会有PARSE_FORWARD_LOCK标记
         if ((parseFlags & PackageParser.PARSE_FORWARD_LOCK) != 0 && !updatedPkgBetter) {
             if (ps != null && ps.resourcePathString != null) {
                 resourcePath = ps.resourcePathString;
@@ -5881,6 +5893,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                 Slog.e(TAG, "Resource path not set for pkg : " + pkg.packageName);
             }
         } else {
+            //对于扫描/data/app/com.canmeizhexue.demo-1这样的情况，执行这个，这俩个属性有什么不一样？？？
             resourcePath = pkg.codePath;
             baseResourcePath = pkg.baseCodePath;
         }
@@ -5894,6 +5907,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         pkg.applicationInfo.setBaseResourcePath(baseResourcePath);
         pkg.applicationInfo.setSplitResourcePaths(pkg.splitCodePaths);
 
+        //解压缩app,
         // Note that we invoke the following method only if we are about to unpack an application
         PackageParser.Package scannedPkg = scanPackageLI(pkg, parseFlags, scanFlags
                 | SCAN_UPDATE_SIGNATURE, currentTime, user);
@@ -5917,7 +5931,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
         return scannedPkg;
     }
-
+    //确定进程名
     private static String fixProcessName(String defProcessName,
             String processName, int uid) {
         if (processName == null) {
@@ -6297,7 +6311,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         }
         return true;
     }
-
+    //其实这个地方uid里面存的值是appId,而不是真正的uid
     private int createDataDirsLI(String volumeUuid, String packageName, int uid, String seinfo) {
         int[] users = sUserManager.getUserIds();
         int res = mInstaller.install(volumeUuid, packageName, uid, uid, seinfo);
@@ -6457,11 +6471,12 @@ public class PackageManagerService extends IPackageManager.Stub {
 
         return cpuAbiOverride;
     }
-
+    //解压缩app,
     private PackageParser.Package scanPackageLI(PackageParser.Package pkg, int parseFlags,
             int scanFlags, long currentTime, UserHandle user) throws PackageManagerException {
         boolean success = false;
         try {
+
             final PackageParser.Package res = scanPackageDirtyLI(pkg, parseFlags, scanFlags,
                     currentTime, user);
             success = true;
@@ -6472,7 +6487,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             }
         }
     }
-
+    //解压缩app
     private PackageParser.Package scanPackageDirtyLI(PackageParser.Package pkg, int parseFlags,
             int scanFlags, long currentTime, UserHandle user) throws PackageManagerException {
         final File scanFile = new File(pkg.codePath);
@@ -6500,6 +6515,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         }
 
         if (pkg.packageName.equals("android")) {
+            //android系统，，，
             synchronized (mPackages) {
                 if (mAndroidApplication != null) {
                     Slog.w(TAG, "*************************************************");
@@ -6540,7 +6556,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             if ((parseFlags & PackageParser.PARSE_CHATTY) != 0)
                 Log.d(TAG, "Scanning package " + pkg.packageName);
         }
-
+        //之前已经解析过了，重复包，这个也说明如果是升级的情况，在这个之前肯定会将旧的清除，，，*********************************
         if (mPackages.containsKey(pkg.packageName)
                 || mSharedLibraries.containsKey(pkg.packageName)) {
             throw new PackageManagerException(INSTALL_FAILED_DUPLICATE_PACKAGE,
@@ -6557,10 +6573,12 @@ public class PackageManagerService extends IPackageManager.Stub {
         // to the user-installed location. If we don't allow this change, any newer,
         // user-installed version of the application will be ignored.
         if ((scanFlags & SCAN_REQUIRE_KNOWN) != 0) {
+            //对于/data/app/com.canzhexue.demo-1这种，这里是满足的，，，
             if (mExpectingBetter.containsKey(pkg.packageName)) {
                 logCriticalInfo(Log.WARN,
                         "Relax SCAN_REQUIRE_KNOWN requirement for package " + pkg.packageName);
             } else {
+                //对于/data/app/com.canzhexue.demo-1这种，走这个，目前都还没创建对应的PackageSetting
                 PackageSetting known = mSettings.peekPackageLPr(pkg.packageName);
                 if (known != null) {
                     if (DEBUG_PACKAGE_SCANNING) {
@@ -6568,6 +6586,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                                 + " and requiring known paths " + known.codePathString
                                 + " & " + known.resourcePathString);
                     }
+                    //同包名，但是代码路径和资源路径不一致了，，，，
                     if (!pkg.applicationInfo.getCodePath().equals(known.codePathString)
                             || !pkg.applicationInfo.getResourcePath().equals(known.resourcePathString)) {
                         throw new PackageManagerException(INSTALL_FAILED_PACKAGE_CHANGED,
@@ -6587,6 +6606,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         PackageSetting pkgSetting = null;
 
         if (!isSystemApp(pkg)) {
+            //不是系统app，清空这些字段
             // Only system apps can use these features.
             pkg.mOriginalPackages = null;
             pkg.mRealPackage = null;
@@ -6596,6 +6616,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         // writer
         synchronized (mPackages) {
             if (pkg.mSharedUserId != null) {
+                //普通app不满足，一般不会去设置这个，，，，
                 suid = mSettings.getSharedUserLPw(pkg.mSharedUserId, 0, 0, true);
                 if (suid == null) {
                     throw new PackageManagerException(INSTALL_FAILED_INSUFFICIENT_STORAGE,
@@ -6613,6 +6634,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             PackageSetting origPackage = null;
             String realName = null;
             if (pkg.mOriginalPackages != null) {
+                //一般app不满足，
                 // This package may need to be renamed to a previously
                 // installed name.  Let's check on that...
                 final String renamed = mSettings.mRenamedPackages.get(pkg.mRealPackage);
@@ -6663,9 +6685,12 @@ public class PackageManagerService extends IPackageManager.Stub {
                 Slog.w(TAG, "Package " + pkg.packageName
                         + " was transferred to another, but its .apk remains");
             }
-
+            //对于ApplicationInfo里面的特殊字段值，可以到PackageParser里面寻找，
             // Just create the setting, don't add it yet. For already existing packages
             // the PkgSetting exists already and doesn't have to be created.
+            //对于/data/app/com.canmeizhexue.demo-1的情况，
+            //origPackage=null,realName=null,suid=null,user=null ,,注意这个地方不会添加到Settings里面
+            //这里会在Settings里面产生一个userId,并且保存在了pkgSetting.appId里面，但是这个userId目前和linux内核并没有什么关联的，
             pkgSetting = mSettings.getPackageLPw(pkg, origPackage, realName, suid, destCodeFile,
                     destResourceFile, pkg.applicationInfo.nativeLibraryRootDir,
                     pkg.applicationInfo.primaryCpuAbi,
@@ -6673,6 +6698,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                     pkg.applicationInfo.flags, pkg.applicationInfo.privateFlags,
                     user, false);
             if (pkgSetting == null) {
+                //安装apk的时候，空间不够，
                 throw new PackageManagerException(INSTALL_FAILED_INSUFFICIENT_STORAGE,
                         "Creating application package " + pkg.packageName + " failed");
             }
@@ -6706,6 +6732,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             }
 
             if ((parseFlags&PackageParser.PARSE_IS_SYSTEM_DIR) == 0) {
+                //对于/data/app/com.canmeizhexue.demo-1的情况，不能满足这个，
                 // Check all shared libraries and map to their actual file path.
                 // We only do this here for apps not on a system dir, because those
                 // are the only ones that can fail an install due to this.  We
@@ -6717,9 +6744,10 @@ public class PackageManagerService extends IPackageManager.Stub {
             if (mFoundPolicyFile) {
                 SELinuxMMAC.assignSeinfoValue(pkg);
             }
-
+            //将刚刚返回的uid保存到ApplicationInfo里面，之前存在了PackageSetting.appId里面，
             pkg.applicationInfo.uid = pkgSetting.appId;
             pkg.mExtras = pkgSetting;
+            //对于/data/app/com.canmeizhexue.demo-1的情况 ，scanFlags里面包含了SCAN_INITIAL，所以下面这个函数返回false
             if (shouldCheckUpgradeKeySetLP(pkgSetting, scanFlags)) {
                 if (checkUpgradeKeySetLP(pkgSetting, pkg)) {
                     // We just determined the app is signed correctly, so bring
@@ -6739,6 +6767,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                 }
             } else {
                 try {
+                    //验证签名，
                     verifySignaturesLP(pkgSetting, pkg);
                     // We just determined the app is signed correctly, so bring
                     // over the latest parsed certs.
@@ -6775,6 +6804,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             // package isn't already installed, since we don't want to break
             // things that are installed.
             if ((scanFlags & SCAN_NEW_INSTALL) != 0) {
+                //对于/data/app/com.canmeizhexue.demo-1的情况 ，不满足，
                 final int N = pkg.providers.size();
                 int i;
                 for (i=0; i<N; i++) {
@@ -6819,6 +6849,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
         final long scanFileTime = scanFile.lastModified();
         final boolean forceDex = (scanFlags & SCAN_FORCE_DEX) != 0;
+        //确定进程名
         pkg.applicationInfo.processName = fixProcessName(
                 pkg.applicationInfo.packageName,
                 pkg.applicationInfo.processName,
@@ -6832,6 +6863,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             pkg.applicationInfo.dataDir = dataPath.getPath();
 
         } else {
+            //普通的App
             // This is a normal package, need to make its data directory.
             dataPath = Environment.getDataUserPackageDirectory(pkg.volumeUuid,
                     UserHandle.USER_OWNER, pkg.packageName);
@@ -6930,10 +6962,12 @@ public class PackageManagerService extends IPackageManager.Stub {
                             pkg.applicationInfo.seinfo, pkg.applicationInfo.uid);
                 }
             } else {
+                //第一次走这个，
                 if (DEBUG_PACKAGE_SCANNING) {
                     if ((parseFlags & PackageParser.PARSE_CHATTY) != 0)
                         Log.v(TAG, "Want this data dir: " + dataPath);
                 }
+                //真正的安装，，里面会创建数据目录，**************************************
                 //invoke installer to do the actual installation
                 int ret = createDataDirsLI(pkg.volumeUuid, pkgName, pkg.applicationInfo.uid,
                         pkg.applicationInfo.seinfo);
@@ -6956,7 +6990,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
         final String path = scanFile.getPath();
         final String cpuAbiOverride = deriveAbiOverride(pkg.cpuAbiOverride, pkgSetting);
-
+        //对于/data/app/com.canmeizhexue.demo-1,,,scanFlags = SCAN_NO_PATHS | SCAN_DEFER_DEX | SCAN_BOOTING | SCAN_INITIAL | SCAN_REQUIRE_KNOWN | SCAN_UPDATE_SIGNATURE
         if ((scanFlags & SCAN_NEW_INSTALL) == 0) {
             derivePackageAbi(pkg, scanFile, cpuAbiOverride, true /* extract libs */);
 
@@ -6999,7 +7033,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                     }
                 }
             }
-
+            //如果有本地库，并且是32位的，，**************************************************************************************************************************************************
             // Create a native library symlink only if we have native libraries
             // and if the native libraries are 32 bit libraries. We do not provide
             // this symlink for 64 bit libraries.
@@ -7088,6 +7122,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         // writer
         synchronized (mPackages) {
             if ((pkg.applicationInfo.flags&ApplicationInfo.FLAG_SYSTEM) != 0) {
+                //只有系统app才可以做下面的操作，，，，
                 // Only system apps can add new shared libraries.
                 if (pkg.libraryNames != null) {
                     for (int i=0; i<pkg.libraryNames.size(); i++) {
@@ -7144,6 +7179,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         // if these fail, we should abort the install since installing the library will
         // result in some apps being broken.
         if (clientLibPkgs != null) {
+            //对于第三方的app,这个地方不满足，因为clientLibPkgs==null
             if ((scanFlags & SCAN_NO_DEX) == 0) {
                 for (int i = 0; i < clientLibPkgs.size(); i++) {
                     PackageParser.Package clientPkg = clientLibPkgs.get(i);
@@ -7184,8 +7220,10 @@ public class PackageManagerService extends IPackageManager.Stub {
             // We don't expect installation to fail beyond this point
 
             // Add the new setting to mSettings
+            //用Package里面的字段更新PackageSetting,将PackageSetting加入Settings
             mSettings.insertPackageSettingLPw(pkgSetting, pkg);
             // Add the new setting to mPackages
+            //将Package加入mPackages*************************************************************************************************
             mPackages.put(pkg.applicationInfo.packageName, pkg);
             // Make sure we don't accidentally delete its data.
             final Iterator<PackageCleanItem> iter = mSettings.mPackagesToBeCleaned.iterator();
@@ -7216,7 +7254,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
             // Add the package's KeySets to the global KeySetManagerService
             ksms.addScannedPackageLPw(pkg);
-
+            //处理provider
             int N = pkg.providers.size();
             StringBuilder r = null;
             int i;
@@ -7224,13 +7262,15 @@ public class PackageManagerService extends IPackageManager.Stub {
                 PackageParser.Provider p = pkg.providers.get(i);
                 p.info.processName = fixProcessName(pkg.applicationInfo.processName,
                         p.info.processName, pkg.applicationInfo.uid);
-                mProviders.addProvider(p);
+                //将这个apk里面的provider信息加入mProviders*****************************************************************************************
+                mProviders.addProvider(p);//保存了不想改的provider
                 p.syncable = p.info.isSyncable;
                 if (p.info.authority != null) {
                     String names[] = p.info.authority.split(";");
                     p.info.authority = null;
                     for (int j = 0; j < names.length; j++) {
                         if (j == 1 && p.syncable) {
+                            //只想第一个权限对应的provider是同步的，
                             // We only want the first authority for a provider to possibly be
                             // syncable, so if we already added this provider using a different
                             // authority clear the syncable flag. We copy the provider before
@@ -7243,6 +7283,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                         }
                         if (!mProvidersByAuthority.containsKey(names[j])) {
                             mProvidersByAuthority.put(names[j], p);
+                            //这么做剔除了和别人重复的权限部分，，，，，，，，
                             if (p.info.authority == null) {
                                 p.info.authority = names[j];
                             } else {
@@ -7255,6 +7296,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                                             + p.info.isSyncable);
                             }
                         } else {
+                            //有其他的provider用了这个权限，，，那么我们这个被跳过了，，，，也就是说如果权限相同，那么谁先注册，最终保留的是最先注册的，
                             PackageParser.Provider other = mProvidersByAuthority.get(names[j]);
                             Slog.w(TAG, "Skipping provider name " + names[j] +
                                     " (in package " + pkg.applicationInfo.packageName +
@@ -7276,7 +7318,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             if (r != null) {
                 if (DEBUG_PACKAGE_SCANNING) Log.d(TAG, "  Providers: " + r);
             }
-
+            //将这个apk里面的service信息加入mServices*****************************************************************************************
             N = pkg.services.size();
             r = null;
             for (i=0; i<N; i++) {
@@ -7296,7 +7338,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             if (r != null) {
                 if (DEBUG_PACKAGE_SCANNING) Log.d(TAG, "  Services: " + r);
             }
-
+            //将这个apk里面的静态注册的广播接收器信息加入mReceivers*****************************************************************************************
             N = pkg.receivers.size();
             r = null;
             for (i=0; i<N; i++) {
@@ -7316,7 +7358,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             if (r != null) {
                 if (DEBUG_PACKAGE_SCANNING) Log.d(TAG, "  Receivers: " + r);
             }
-
+            //将这个apk里面的Activity信息加入mActivities*****************************************************************************************
             N = pkg.activities.size();
             r = null;
             for (i=0; i<N; i++) {
@@ -7336,7 +7378,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             if (r != null) {
                 if (DEBUG_PACKAGE_SCANNING) Log.d(TAG, "  Activities: " + r);
             }
-
+            //将这个apk里面的定义的权限组信息加入mPermissionGroups*****************************************************************************************
             N = pkg.permissionGroups.size();
             r = null;
             for (i=0; i<N; i++) {
@@ -7370,7 +7412,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             if (r != null) {
                 if (DEBUG_PACKAGE_SCANNING) Log.d(TAG, "  Permission Groups: " + r);
             }
-
+            //将这个apk里面的定义的权限信息加入mPermissionGroups*****************************************************************************************
             N = pkg.permissions.size();
             r = null;
             for (i=0; i<N; i++) {
@@ -9165,6 +9207,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                                 ? p.info.nonLocalizedLabel : p.info.name) + ":");
                 Log.v(TAG, "    Class=" + p.info.name);
             }
+            //p.intents代表的是AndroidManifest中启动这个provider的intent
             final int NI = p.intents.size();
             int j;
             for (j = 0; j < NI; j++) {
@@ -9314,7 +9357,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             }
             out.println();
         }
-
+        //key代表的就是value对应的Provider
         private final ArrayMap<ComponentName, PackageParser.Provider> mProviders
                 = new ArrayMap<ComponentName, PackageParser.Provider>();
         private int mFlags;

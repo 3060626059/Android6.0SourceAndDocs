@@ -214,7 +214,7 @@ final class Settings {
     private final File mPackageListFilename;
     private final File mStoppedPackagesFilename;
     private final File mBackupStoppedPackagesFilename;
-
+    //key是包名，，
     final ArrayMap<String, PackageSetting> mPackages =
             new ArrayMap<String, PackageSetting>();
 
@@ -315,6 +315,7 @@ final class Settings {
     // Keys are the new names of the packages, values are the original
     // names.  The packages appear everwhere else under their original
     // names.
+    //key 是包名
     final ArrayMap<String, String> mRenamedPackages = new ArrayMap<String, String>();
 
     // For every user, it is used to find the package name of the default Browser App.
@@ -364,7 +365,7 @@ final class Settings {
         mStoppedPackagesFilename = new File(mSystemDir, "packages-stopped.xml");  //   /data/system/packages-stopped.xml
         mBackupStoppedPackagesFilename = new File(mSystemDir, "packages-stopped-backup.xml");  //   /data/system/packages-stopped-backup.xml
     }
-
+    //调用另外一个版本，
     PackageSetting getPackageLPw(PackageParser.Package pkg, PackageSetting origPackage,
             String realName, SharedUserSetting sharedUser, File codePath, File resourcePath,
             String legacyNativeLibraryPathString, String primaryCpuAbi, String secondaryCpuAbi,
@@ -375,7 +376,7 @@ final class Settings {
                 pkg.mVersionCode, pkgFlags, pkgPrivateFlags, user, add, true /* allowInstall */);
         return p;
     }
-
+    //通过包名获取PackageSetting
     PackageSetting peekPackageLPr(String name) {
         return mPackages.get(name);
     }
@@ -495,6 +496,7 @@ final class Settings {
         return null;
     }
     //先通过name查找SharedUserSetting
+    //这个name一般代表sharedUserId,
     SharedUserSetting addSharedUserLPw(String name, int uid, int pkgFlags, int pkgPrivateFlags) {
         SharedUserSetting s = mSharedUsers.get(name);
         if (s != null) {
@@ -561,6 +563,7 @@ final class Settings {
         PackageSetting p = mPackages.get(name);
         UserManagerService userManager = UserManagerService.getInstance();
         if (p != null) {
+            //对于/data/app/com.canmeizhexue.demo-1这种情况，第一次不满足，
             p.primaryCpuAbiString = primaryCpuAbiString;
             p.secondaryCpuAbiString = secondaryCpuAbiString;
 
@@ -602,8 +605,10 @@ final class Settings {
                 p.pkgPrivateFlags |= pkgPrivateFlags & ApplicationInfo.PRIVATE_FLAG_PRIVILEGED;
             }
         }
+        //对于/data/app/com.canmeizhexue.demo-1这种情况， p==null origPackage==null
         if (p == null) {
             if (origPackage != null) {
+                //一般app不满足这条，
                 // We are consuming the data from an existing package.
                 p = new PackageSetting(origPackage.name, name, codePath, resourcePath,
                         legacyNativeLibraryPathString, primaryCpuAbiString, secondaryCpuAbiString,
@@ -624,6 +629,7 @@ final class Settings {
                 // Update new package state.
                 p.setTimeStamp(codePath.lastModified());
             } else {
+                //构造PackageSetting
                 p = new PackageSetting(name, realName, codePath, resourcePath,
                         legacyNativeLibraryPathString, primaryCpuAbiString, secondaryCpuAbiString,
                         null /* cpuAbiOverrideString */, vc, pkgFlags, pkgPrivateFlags);
@@ -631,12 +637,14 @@ final class Settings {
                 p.sharedUser = sharedUser;
                 // If this is not a system app, it starts out stopped.
                 if ((pkgFlags&ApplicationInfo.FLAG_SYSTEM) == 0) {
+                    //不是系统app,那么解析出来这个app初始化状态是停止状态，，，**********************************
                     if (DEBUG_STOPPED) {
                         RuntimeException e = new RuntimeException("here");
                         e.fillInStackTrace();
                         Slog.i(PackageManagerService.TAG, "Stopping package " + name, e);
                     }
                     List<UserInfo> users = getAllUsers();
+                    //对于/data/app/com.canmeizhexue.demo-1这种情况，installUser==null
                     final int installUserId = installUser != null ? installUser.getIdentifier() : 0;
                     if (users != null && allowInstall) {
                         for (UserInfo user : users) {
@@ -650,6 +658,8 @@ final class Settings {
                                     || (installUserId == UserHandle.USER_ALL
                                         && !isAdbInstallDisallowed(userManager, user.id))
                                     || installUserId == user.id;
+
+                            //给哪些用户安装这个app,目前只考虑单用户的情况，，
                             p.setUserState(user.id, COMPONENT_ENABLED_STATE_DEFAULT,
                                     installed,
                                     true, // stopped,
@@ -663,8 +673,10 @@ final class Settings {
                     }
                 }
                 if (sharedUser != null) {
+
                     p.appId = sharedUser.userId;
                 } else {
+                    //对于/data/app/com.canmeizhexue.demo-1这种情况，走这个，
                     // Clone the setting here for disabled system packages
                     PackageSetting dis = mDisabledSysPackages.get(name);
                     if (dis != null) {
@@ -692,6 +704,7 @@ final class Settings {
                         // Add new setting to list of user ids
                         addUserIdLPw(p.appId, p, name);
                     } else {
+                        //一般走这个，，构造一个新的userId,并且赋值给PackageSetting的appId字段，，，**************************
                         // Assign new user id
                         p.appId = newUserIdLPw(p);
                     }
@@ -703,6 +716,7 @@ final class Settings {
                 return null;
             }
             if (add) {
+                //对于/data/app/com.canmeizhexue.demo-1这种情况，不会走这个，，，，因为add==false
                 // Finish adding new package by adding it and updating shared
                 // user preferences
                 addPackageSettingLPw(p, name, sharedUser);
@@ -735,8 +749,11 @@ final class Settings {
         return userManager.hasUserRestriction(UserManager.DISALLOW_DEBUGGING_FEATURES,
                 userId);
     }
-
+    //用PackageParser.Package里面的字段更新PackageSetting
+    //调用addPackageSettingLPw
     void insertPackageSettingLPw(PackageSetting p, PackageParser.Package pkg) {
+
+
         p.pkg = pkg;
         // pkg.mSetEnabled = p.getEnabled(userId);
         // pkg.mSetStopped = p.getStopped(userId);
@@ -3722,11 +3739,12 @@ final class Settings {
             mFirstAvailableUid = uid;
         }
     }
-
+    //构造一个userId,,,从PMS的createDataDirsLI函数来看，这里只是appId，不是真正的userId
     // Returns -1 if we could not find an available UserId to assign
     private int newUserIdLPw(Object obj) {
         // Let's be stupidly inefficient for now...
         final int N = mUserIds.size();
+        //从这个列表里面找到一个空位，然后返回，
         for (int i = mFirstAvailableUid; i < N; i++) {
             if (mUserIds.get(i) == null) {
                 mUserIds.set(i, obj);
@@ -3738,7 +3756,7 @@ final class Settings {
         if (N > (Process.LAST_APPLICATION_UID-Process.FIRST_APPLICATION_UID)) {
             return -1;
         }
-
+        //没找到空位，返回一个新的，列表会增大，
         mUserIds.add(obj);
         return Process.FIRST_APPLICATION_UID + N;
     }
@@ -3752,7 +3770,7 @@ final class Settings {
 
         return mVerifierDeviceIdentity;
     }
-
+    //通过包名从mDisabledSysPackages获取PackageSetting
     public PackageSetting getDisabledSystemPkgLPr(String name) {
         PackageSetting ps = mDisabledSysPackages.get(name);
         return ps;
