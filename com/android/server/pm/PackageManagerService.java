@@ -926,6 +926,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             if (DEBUG_SD_INSTALL) Log.i(TAG, "onServiceConnected");
             IMediaContainerService imcs =
                 IMediaContainerService.Stub.asInterface(service);
+            //绑定成功，发送MCS_BOUND消息，
             mHandler.sendMessage(mHandler.obtainMessage(MCS_BOUND, imcs));
         }
 
@@ -1099,6 +1100,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
     class PackageHandler extends Handler {
         private boolean mBound = false;
+        //里面存的有可能是子类，
         final ArrayList<HandlerParams> mPendingInstalls =
             new ArrayList<HandlerParams>();
 
@@ -1110,6 +1112,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             if (mContext.bindServiceAsUser(service, mDefContainerConn,
                     Context.BIND_AUTO_CREATE, UserHandle.OWNER)) {
                 Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+                //标识绑定成功，
                 mBound = true;
                 return true;
             }
@@ -1159,6 +1162,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                             mPendingInstalls.add(idx, params);
                         }
                     } else {
+                        //已经绑定到Service,
                         mPendingInstalls.add(idx, params);
                         // Already bound to the service. Just make
                         // sure we trigger off processing the first request.
@@ -1187,6 +1191,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                             Slog.w(TAG, "Waiting to connect to media container service");
                         }
                     } else if (mPendingInstalls.size() > 0) {
+                        //有需要安装apk的任务，，
                         HandlerParams params = mPendingInstalls.get(0);
                         if (params != null) {
                             if (params.startCopy()) {
@@ -1199,6 +1204,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                                     mPendingInstalls.remove(0);
                                 }
                                 if (mPendingInstalls.size() == 0) {
+                                    //如果没有了，去解绑
                                     if (mBound) {
                                         if (DEBUG_SD_INSTALL) Log.i(TAG,
                                                 "Posting delayed MCS_UNBIND");
@@ -1209,6 +1215,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                                         sendMessageDelayed(ubmsg, 10000);
                                     }
                                 } else {
+                                    //如果还有，处理下一个任务，
                                     // There are more pending requests in queue.
                                     // Just post MCS_BOUND message to trigger processing
                                     // of next pending install.
@@ -7578,7 +7585,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         return pkg;
     }
 
-    /**
+    /**从scanFile指定的apk里面提取ABI,是否so文件等，
      * Derive the ABI of a non-system package located at {@code scanFile}. This information
      * is derived purely on the basis of the contents of {@code scanFile} and
      * {@code cpuAbiOverride}.
@@ -7595,6 +7602,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
         // Give ourselves some initial paths; we'll come back for another
         // pass once we've determined ABI below.
+        //设置本地库路径，一旦确定了ABI,下面还会再计算一次，，，
         setNativeLibraryPaths(pkg);
 
         // We would never need to extract libs for forward-locked and external packages,
@@ -7604,7 +7612,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             (isSystemApp(pkg) && !pkg.isUpdatedSystemApp()) ) {
             extractLibs = false;
         }
-
+        //  /data/app/com.canmeizhexue.demo-1/lib
         final String nativeLibraryRootStr = pkg.applicationInfo.nativeLibraryRootDir;
         final boolean useIsaSpecificSubdirs = pkg.applicationInfo.nativeLibraryRootRequiresIsa;
 
@@ -7635,6 +7643,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                 int abi64 = PackageManager.NO_NATIVE_LIBRARIES;
                 if (Build.SUPPORTED_32_BIT_ABIS.length > 0) {
                     if (extractLibs) {
+                        //释放so文件
                         abi32 = NativeLibraryHelper.copyNativeBinariesForSupportedAbi(handle,
                                 nativeLibraryRoot, Build.SUPPORTED_32_BIT_ABIS,
                                 useIsaSpecificSubdirs);
@@ -7648,6 +7657,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
                 if (Build.SUPPORTED_64_BIT_ABIS.length > 0) {
                     if (extractLibs) {
+                        //释放so文件
                         abi64 = NativeLibraryHelper.copyNativeBinariesForSupportedAbi(handle,
                                 nativeLibraryRoot, Build.SUPPORTED_64_BIT_ABIS,
                                 useIsaSpecificSubdirs);
@@ -7867,12 +7877,14 @@ public class PackageManagerService extends IPackageManager.Stub {
         return codeRoot.getPath();
     }
 
-    /**
+    /**根据安装地方的不同，提取和设置本地库的路径，也就是说安装在内部存储和外部存储的时候，它们本地库的路径是不一样的。
      * Derive and set the location of native libraries for the given package,
      * which varies depending on where and how the package was installed.
      */
     private void setNativeLibraryPaths(PackageParser.Package pkg) {
         final ApplicationInfo info = pkg.applicationInfo;
+
+        //codePath到底是什么，，
         final String codePath = pkg.codePath;
         final File codeFile = new File(codePath);
         final boolean bundledApp = info.isSystemApp() && !info.isUpdatedSystemApp();
@@ -7882,8 +7894,12 @@ public class PackageManagerService extends IPackageManager.Stub {
         info.nativeLibraryRootRequiresIsa = false;
         info.nativeLibraryDir = null;
         info.secondaryNativeLibraryDir = null;
+        //NativeLibraryHelper复制过来的，
+/*         LIB_DIR_NAME = "lib";
+         LIB64_DIR_NAME = "lib64";*/
 
         if (isApkFile(codeFile)) {
+            //是apk文件
             // Monolithic install
             if (bundledApp) {
                 // If "/system/lib64/apkname" exists, assume that is the per-package
@@ -7909,7 +7925,9 @@ public class PackageManagerService extends IPackageManager.Stub {
                 info.nativeLibraryRootDir = new File(codeFile.getParentFile(), LIB_DIR_NAME)
                         .getAbsolutePath();
             } else {
+                //第三方，安装在内部存储器，
                 final String apkName = deriveCodePathName(codePath);
+                // mAppLib32InstallDir /data/app-lib
                 info.nativeLibraryRootDir = new File(mAppLib32InstallDir, apkName)
                         .getAbsolutePath();
             }
@@ -7917,14 +7935,26 @@ public class PackageManagerService extends IPackageManager.Stub {
             info.nativeLibraryRootRequiresIsa = false;
             info.nativeLibraryDir = info.nativeLibraryRootDir;
         } else {
+            //是文件夹，但是里面有apk文件，codeFile类似于/data/app/com.canmeizhexue.demo-1
             // Cluster install
-            info.nativeLibraryRootDir = new File(codeFile, LIB_DIR_NAME).getAbsolutePath();
+            info.nativeLibraryRootDir = new File(codeFile, LIB_DIR_NAME).getAbsolutePath(); //data/app/com.canmeizhexue.demo-1/lib
             info.nativeLibraryRootRequiresIsa = true;
 
+            // 类似于/data/app/com.canmeizhexue.demo-1/lib/arm64
             info.nativeLibraryDir = new File(info.nativeLibraryRootDir,
                     getPrimaryInstructionSet(info)).getAbsolutePath();
 
+            //VMRuntime里面有abi到指令集的映射，
+/*    44        ABI_TO_INSTRUCTION_SET_MAP.put("armeabi", "arm");
+    45        ABI_TO_INSTRUCTION_SET_MAP.put("armeabi-v7a", "arm");
+    46        ABI_TO_INSTRUCTION_SET_MAP.put("mips", "mips");
+    47        ABI_TO_INSTRUCTION_SET_MAP.put("mips64", "mips64");
+    48        ABI_TO_INSTRUCTION_SET_MAP.put("x86", "x86");
+    49        ABI_TO_INSTRUCTION_SET_MAP.put("x86_64", "x86_64");
+    50        ABI_TO_INSTRUCTION_SET_MAP.put("arm64-v8a", "arm64");*/
+
             if (info.secondaryCpuAbi != null) {
+                // 类似于/data/app/com.canmeizhexue.demo-1/lib/arm
                 info.secondaryNativeLibraryDir = new File(info.nativeLibraryRootDir,
                         VMRuntime.getInstructionSet(info.secondaryCpuAbi)).getAbsolutePath();
             }
@@ -9528,11 +9558,12 @@ public class PackageManagerService extends IPackageManager.Stub {
     public void installPackageAsUser(String originPath, IPackageInstallObserver2 observer,
             int installFlags, String installerPackageName, VerificationParams verificationParams,
             String packageAbiOverride, int userId) {
+        //检查调用者进程有没有权限，
         mContext.enforceCallingOrSelfPermission(android.Manifest.permission.INSTALL_PACKAGES, null);
 
         final int callingUid = Binder.getCallingUid();
         enforceCrossUserPermission(callingUid, userId, true, true, "installPackageAsUser");
-
+        //userId代表调用者进程信息
         if (isUserRestricted(userId, UserManager.DISALLOW_INSTALL_APPS)) {
             try {
                 if (observer != null) {
@@ -9554,8 +9585,9 @@ public class PackageManagerService extends IPackageManager.Stub {
             installFlags &= ~PackageManager.INSTALL_ALL_USERS;
         }
 
-        UserHandle user;
+        UserHandle user; //标识这个app对哪些用户可见
         if ((installFlags & PackageManager.INSTALL_ALL_USERS) != 0) {
+            //这个被安装的app对所有用户可见，
             user = UserHandle.ALL;
         } else {
             user = new UserHandle(userId);
@@ -9571,7 +9603,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         }
 
         verificationParams.setInstallerUid(callingUid);
-
+        //代表被安装的apk，比如/XXXX/com.canmeizhexue.demo.apk
         final File originFile = new File(originPath);
         final OriginInfo origin = OriginInfo.fromUntrustedFile(originFile);
 
@@ -10579,7 +10611,9 @@ public class PackageManagerService extends IPackageManager.Stub {
             int ret = PackageManager.INSTALL_SUCCEEDED;
 
             // If we're already staged, we've firmly committed to an install location
+            //比如/XXXX/com.canmeizhexue.demo.apk,在我自己的安装场景中这个为origin.staged==false
             if (origin.staged) {
+
                 if (origin.file != null) {
                     installFlags |= PackageManager.INSTALL_INTERNAL;
                     installFlags &= ~PackageManager.INSTALL_EXTERNAL;
@@ -10590,7 +10624,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                     throw new IllegalStateException("Invalid stage location");
                 }
             }
-
+            //有没有设置安装在sd卡还是内部存储器
             final boolean onSd = (installFlags & PackageManager.INSTALL_EXTERNAL) != 0;
             final boolean onInt = (installFlags & PackageManager.INSTALL_INTERNAL) != 0;
 
@@ -10601,10 +10635,11 @@ public class PackageManagerService extends IPackageManager.Stub {
                 Slog.w(TAG, "Conflicting flags specified for installing on both internal and external");
                 ret = PackageManager.INSTALL_FAILED_INVALID_INSTALL_LOCATION;
             } else {
+                //origin.resolvedPath代表apk的路径，
                 pkgLite = mContainerService.getMinimalPackageInfo(origin.resolvedPath, installFlags,
                         packageAbiOverride);
 
-                /*
+                /*如果空间不够，释放缓存，
                  * If we have too little free space, try to free cache
                  * before giving up.
                  */
@@ -10617,7 +10652,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
                     final long sizeBytes = mContainerService.calculateInstalledSize(
                             origin.resolvedPath, isForwardLocked(), packageAbiOverride);
-
+                    //释放缓存，
                     if (mInstaller.freeCache(null, sizeBytes + lowThreshold) >= 0) {
                         pkgLite = mContainerService.getMinimalPackageInfo(origin.resolvedPath,
                                 installFlags, packageAbiOverride);
@@ -10637,7 +10672,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                     }
                 }
             }
-
+            //确定安装位置，
             if (ret == PackageManager.INSTALL_SUCCEEDED) {
                 int loc = pkgLite.recommendedInstallLocation;
                 if (loc == PackageHelper.RECOMMEND_FAILED_INVALID_LOCATION) {
@@ -10878,6 +10913,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         } else if (installOnExternalAsec(params.installFlags) || params.isForwardLocked()) {
             return new AsecInstallArgs(params);
         } else {
+            //一般走这个，
             return new FileInstallArgs(params);
         }
     }
@@ -11758,7 +11794,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         String origPermission;
     }
 
-    /*
+    /*安装一个新的apk,
      * Install a non-existing package.
      */
     private void installNewPackageLI(PackageParser.Package pkg, int parseFlags, int scanFlags,
@@ -12269,6 +12305,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
                 // Prevent apps opting out from runtime permissions
                 if (replace) {
+                    //替换安装
                     PackageParser.Package oldPackage = mPackages.get(pkgName);
                     final int oldTargetSdk = oldPackage.applicationInfo.targetSdkVersion;
                     final int newTargetSdk = pkg.applicationInfo.targetSdkVersion;
@@ -12284,6 +12321,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             }
 
             PackageSetting ps = mSettings.mPackages.get(pkgName);
+            //对于第一次安装一个全新的apk,这个地方ps==null,
             if (ps != null) {
                 if (DEBUG_INSTALL) Slog.d(TAG, "Existing package: " + ps);
 
@@ -12313,7 +12351,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                 }
                 res.origUsers = ps.queryInstalledUsers(sUserManager.getUserIds(), true);
             }
-
+            //检查新安装的apk有没有定义已经定义过的权限，如果重复定义了权限，有可能导致安装失败，
             // Check whether the newly-scanned package wants to define an already-defined perm
             int N = pkg.permissions.size();
             for (int i = N-1; i >= 0; i--) {
@@ -12362,7 +12400,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                     "Cannot install updates to system apps on sdcard");
             return;
         }
-
+        //对于我的场景来说args.move==null,
         if (args.move != null) {
             // We did an in-place move, so dex is ready to roll
             scanFlags |= SCAN_NO_DEX;
@@ -12382,10 +12420,12 @@ public class PackageManagerService extends IPackageManager.Stub {
             }
 
         } else if (!forwardLocked && !pkg.applicationInfo.isExternalAsec()) {
+            //对于安装/XXXX/com.canmeizhexue.demo的场景，会走这个，
             // Enable SCAN_NO_DEX flag to skip dexopt at a later stage
             scanFlags |= SCAN_NO_DEX;
 
             try {
+                //这个地方等会查下args.abiOverride的值，//对于安装/XXXX/com.canmeizhexue.demo的场景，args.abiOverride==null
                 derivePackageAbi(pkg, new File(pkg.codePath), args.abiOverride,
                         true /* extract libs */);
             } catch (PackageManagerException pme) {
@@ -12393,7 +12433,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                 res.setError(INSTALL_FAILED_INTERNAL_ERROR, "Error deriving application ABI");
                 return;
             }
-
+            //优化dex
             // Run dexopt before old package gets removed, to minimize time when app is unavailable
             int result = mPackageDexOptimizer
                     .performDexOpt(pkg, null /* instruction sets */, false /* forceDex */,
@@ -12415,6 +12455,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             replacePackageLI(pkg, parseFlags, scanFlags | SCAN_REPLACING, args.user,
                     installerPackageName, volumeUuid, res);
         } else {
+            //安装apk
             installNewPackageLI(pkg, parseFlags, scanFlags | SCAN_DELETE_DATA_ON_FAILURES,
                     args.user, installerPackageName, volumeUuid, res);
         }

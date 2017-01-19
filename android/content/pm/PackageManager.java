@@ -391,7 +391,7 @@ public abstract class PackageManager {
      */
     public static final int INSTALL_FROM_ADB = 0x00000020;
 
-    /**
+    /**这个地方表明安装app的时候可以指定不用对所有用户可见，
      * Flag parameter for {@link #installPackage} to indicate that this install
      * should immediately be visible to all users.
      *
@@ -408,7 +408,7 @@ public abstract class PackageManager {
      */
     public static final int INSTALL_ALLOW_DOWNGRADE = 0x00000080;
 
-    /**
+    /**安装的时候授予全部运行时权限
      * Flag parameter for {@link #installPackage} to indicate that all runtime
      * permissions should be granted to the package. If {@link #INSTALL_ALL_USERS}
      * is set the runtime permissions will be granted to all users, otherwise
@@ -3545,7 +3545,11 @@ public abstract class PackageManager {
         }
     }
 
-    /**
+    /**安装过程会花费很长时间，安装结果通过回调告知，
+     * 可能导致安装失败的原因，
+     * 1.调用者没有权限
+     * 2.这个包已经被安装
+     * 3.空间不够
      * @hide Install a package. Since this may take a little while, the result
      *       will be posted back to the given observer. An installation will
      *       fail if the calling context lacks the

@@ -1385,10 +1385,14 @@ final class ApplicationPackageManager extends PackageManager {
         installCommon(packageURI, observer, flags, installerPackageName, verificationParams,
                 encryptionParams);
     }
-
+    //参数packageURI标识apk
+    //参数observer接收结果
+    //参数flags标识安装选项，比如安装位置
+    //参数installerPackageName标识安装者包名
     private void installCommon(Uri packageURI,
             PackageInstallObserver observer, int flags, String installerPackageName,
             VerificationParams verificationParams, ContainerEncryptionParams encryptionParams) {
+        //只支持文件类型的uri
         if (!"file".equals(packageURI.getScheme())) {
             throw new UnsupportedOperationException("Only file:// URIs are supported");
         }

@@ -49,7 +49,7 @@ public class Build {
     /** The name of the underlying board, like "goldfish". */
     public static final String BOARD = getString("ro.product.board");
 
-    /**
+    /**这个和当前app里面的so配置情况有很大的关系
      * The name of the instruction set (CPU type + ABI convention) of native code.
      *
      * @deprecated Use {@link #SUPPORTED_ABIS} instead.
@@ -57,7 +57,7 @@ public class Build {
     @Deprecated
     public static final String CPU_ABI;
 
-    /**
+    /**这个和当前app里面的so配置情况有很大的关系
      * The name of the second instruction set (CPU type + ABI convention) of native code.
      *
      * @deprecated Use {@link #SUPPORTED_ABIS} instead.
@@ -94,7 +94,7 @@ public class Build {
     /** A hardware serial number, if available.  Alphanumeric only, case-insensitive. */
     public static final String SERIAL = getString("ro.serialno");
 
-    /**
+    /**这个和当前app里面的so配置情况没有关系
      * An ordered list of ABIs supported by this device. The most preferred ABI is the first
      * element in the list.
      *
@@ -102,7 +102,7 @@ public class Build {
      */
     public static final String[] SUPPORTED_ABIS = getStringList("ro.product.cpu.abilist", ",");
 
-    /**
+    /**这个和当前app里面的so配置情况没有关系
      * An ordered list of <b>32 bit</b> ABIs supported by this device. The most preferred ABI
      * is the first element in the list.
      *
@@ -111,7 +111,7 @@ public class Build {
     public static final String[] SUPPORTED_32_BIT_ABIS =
             getStringList("ro.product.cpu.abilist32", ",");
 
-    /**
+    /**这个和当前app里面的so配置情况没有关系
      * An ordered list of <b>64 bit</b> ABIs supported by this device. The most preferred ABI
      * is the first element in the list.
      *
@@ -129,6 +129,7 @@ public class Build {
          */
         final String[] abiList;
         if (VMRuntime.getRuntime().is64Bit()) {
+            //虚拟机是否在64位模式运行。有可能机器是64位的，但是虚拟机是32位的模式运行，比如apk里面的so都是32位
             abiList = SUPPORTED_64_BIT_ABIS;
         } else {
             abiList = SUPPORTED_32_BIT_ABIS;

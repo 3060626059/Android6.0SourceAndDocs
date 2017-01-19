@@ -33,6 +33,16 @@ import dalvik.system.VMRuntime;
  * @hide
  */
 public class InstructionSets {
+    //VMRuntime里面有abi到指令集的映射，
+/*    44        ABI_TO_INSTRUCTION_SET_MAP.put("armeabi", "arm");
+    45        ABI_TO_INSTRUCTION_SET_MAP.put("armeabi-v7a", "arm");
+    46        ABI_TO_INSTRUCTION_SET_MAP.put("mips", "mips");
+    47        ABI_TO_INSTRUCTION_SET_MAP.put("mips64", "mips64");
+    48        ABI_TO_INSTRUCTION_SET_MAP.put("x86", "x86");
+    49        ABI_TO_INSTRUCTION_SET_MAP.put("x86_64", "x86_64");
+    50        ABI_TO_INSTRUCTION_SET_MAP.put("arm64-v8a", "arm64");*/
+
+    //保存了最适合当前机器的指令集信息，
     private static final String PREFERRED_INSTRUCTION_SET =
             VMRuntime.getInstructionSet(Build.SUPPORTED_ABIS[0]);;
     public static String[] getAppDexInstructionSets(ApplicationInfo info) {

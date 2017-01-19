@@ -4826,6 +4826,7 @@ public class PackageParser {
         // Make shallow copy so we can store the metadata/libraries safely
         ApplicationInfo ai = new ApplicationInfo(p.applicationInfo);
         ai.uid = UserHandle.getUid(userId, ai.uid);
+        //这个在新版系统里面是/data/user/0/com.canmeizhexue.demo
         ai.dataDir = Environment.getDataUserPackageDirectory(ai.volumeUuid, userId, ai.packageName)
                 .getAbsolutePath();
         if ((flags & PackageManager.GET_META_DATA) != 0) {

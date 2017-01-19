@@ -538,7 +538,7 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
      */
     public String seinfo;
 
-    /**
+    /**共享库的目录，
      * Paths to all shared libraries this application is linked against.  This
      * field is only set if the {@link PackageManager#GET_SHARED_LIBRARY_FILES
      * PackageManager.GET_SHARED_LIBRARY_FILES} flag was used when retrieving
@@ -546,13 +546,13 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
      */
     public String[] sharedLibraryFiles;
     
-    /**
+    /**数据目录
      * Full path to a directory assigned to the package for its persistent
      * data.
      */
     public String dataDir;
 
-    /**
+    /**jni库的存储目录
      * Full path to the directory where native JNI libraries are stored.
      */
     public String nativeLibraryDir;
