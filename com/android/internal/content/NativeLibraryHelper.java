@@ -62,7 +62,7 @@ public class NativeLibraryHelper {
     // that the cpuAbiOverride must be clear.
     public static final String CLEAR_ABI_OVERRIDE = "-";
 
-    /**
+    /**操作一个包，这个包里可能有多个apk,
      * A handle to an opened package, consisting of one or more APKs. Used as
      * input to the various NativeLibraryHelper methods. Allows us to scan and
      * parse the APKs exactly once instead of doing it multiple times.
@@ -73,7 +73,7 @@ public class NativeLibraryHelper {
         private final CloseGuard mGuard = CloseGuard.get();
         private volatile boolean mClosed;
 
-        final long[] apkHandles;
+        final long[] apkHandles; //每一个元素对应一个apk
         final boolean multiArch;
         final boolean extractNativeLibs;
 
@@ -162,7 +162,7 @@ public class NativeLibraryHelper {
         return sum;
     }
 
-    /**
+    /**从apk里面复制指定ABI下的so文件到对应的文件夹
      * Copies native binaries to a shared library directory.
      *
      * @param handle APK file to scan for native libraries
@@ -181,7 +181,7 @@ public class NativeLibraryHelper {
         return INSTALL_SUCCEEDED;
     }
 
-    /**
+    /**检查指定的apk里面是否包含对应supportedAbis的so文件，如果有，就返回最匹配的下标，下标越小，越匹配
      * Checks if a given APK contains native code for any of the provided
      * {@code supportedAbis}. Returns an index into {@code supportedAbis} if a matching
      * ABI is found, {@link PackageManager#NO_NATIVE_LIBRARIES} if the
@@ -190,11 +190,14 @@ public class NativeLibraryHelper {
      */
     public static int findSupportedAbi(Handle handle, String[] supportedAbis) {
         int finalRes = NO_NATIVE_LIBRARIES;
+        //这里还有问题，如果有多个apk的话，最匹配A的不一定同时最匹配B，，不过一般都只有一个apk
         for (long apkHandle : handle.apkHandles) {
             final int res = nativeFindSupportedAbi(apkHandle, supportedAbis);
             if (res == NO_NATIVE_LIBRARIES) {
+                //对应apk里面根本没有so文件，寻找下一个apk
                 // No native code, keep looking through all APKs.
             } else if (res == INSTALL_FAILED_NO_MATCHING_ABIS) {
+                //找到有so文件，但是不匹配，
                 // Found some native code, but no ABI match; update our final
                 // result if we haven't found other valid code.
                 if (finalRes < 0) {
@@ -202,6 +205,7 @@ public class NativeLibraryHelper {
                 }
             } else if (res >= 0) {
                 // Found valid native code, track the best ABI match
+                //记录最佳的，越靠近前面，越好，
                 if (finalRes < 0 || res < finalRes) {
                     finalRes = res;
                 }
@@ -260,7 +264,7 @@ public class NativeLibraryHelper {
             }
         }
     }
-
+    //创建文件夹，并且设置权限，
     private static void createNativeLibrarySubdir(File path) throws IOException {
         if (!path.isDirectory()) {
             path.delete();
@@ -270,6 +274,7 @@ public class NativeLibraryHelper {
             }
 
             try {
+                //针对用户、用户组、其他，分别设置权限，
                 Os.chmod(path.getPath(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
             } catch (ErrnoException e) {
                 throw new IOException("Cannot chmod native library directory "
@@ -288,9 +293,10 @@ public class NativeLibraryHelper {
             return 0;
         }
     }
-
+    //找到最匹配的ABI,然后只复制对应这个ABI的so文件，注意只会复制最匹配的，并不会所有ABI都会复制，
     public static int copyNativeBinariesForSupportedAbi(Handle handle, File libraryRoot,
             String[] abiList, boolean useIsaSubdir) throws IOException {
+        //创建文件夹并且设置权限，
         createNativeLibrarySubdir(libraryRoot);
 
         /*
@@ -299,6 +305,7 @@ public class NativeLibraryHelper {
          */
         int abi = findSupportedAbi(handle, abiList);
         if (abi >= 0) {
+            //找到了最匹配的ABI,
             /*
              * If we have a matching instruction set, construct a subdir under the native
              * library root that corresponds to this instruction set.
@@ -307,6 +314,7 @@ public class NativeLibraryHelper {
             final File subDir;
             if (useIsaSubdir) {
                 final File isaSubdir = new File(libraryRoot, instructionSet);
+                //创建指定指令集的文件夹，
                 createNativeLibrarySubdir(isaSubdir);
                 subDir = isaSubdir;
             } else {

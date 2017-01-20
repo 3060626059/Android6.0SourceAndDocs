@@ -7602,7 +7602,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
         // Give ourselves some initial paths; we'll come back for another
         // pass once we've determined ABI below.
-        //设置本地库路径，一旦确定了ABI,下面还会再计算一次，，，
+        //设置本地库路径，一旦确定了ABI,下面还会再计算一次ABI，，，
         setNativeLibraryPaths(pkg);
 
         // We would never need to extract libs for forward-locked and external packages,
@@ -7628,9 +7628,16 @@ public class PackageManagerService extends IPackageManager.Stub {
             final File nativeLibraryRoot = new File(nativeLibraryRootStr);
 
             // Null out the abis so that they can be recalculated.
+            //这个地方等会计算的是ABI,
             pkg.applicationInfo.primaryCpuAbi = null;
             pkg.applicationInfo.secondaryCpuAbi = null;
+            /**如果这个应用程序的代码需要被其他应用程序加载的话，设置这个标记，不过一般不需要设置。
+             * 在支持多种指令集的机器上，这就意味着这些代码可以加载到这个机器上另外的运行其他指令集的进程里。
+             * 系统对于设置这个标记的应用程序会特别对待，比如为所有支持的指令集是否so文件。或者编译为所有支持的指令集编译dex 代码
+             * */
+        //  一般不满足，，，
             if (isMultiArch(pkg.applicationInfo)) {
+                //32位和64位都会处理，，，
                 // Warn if we've set an abiOverride for multi-lib packages..
                 // By definition, we need to copy both 32 and 64 bit libraries for
                 // such packages.
@@ -7641,6 +7648,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
                 int abi32 = PackageManager.NO_NATIVE_LIBRARIES;
                 int abi64 = PackageManager.NO_NATIVE_LIBRARIES;
+                //处理32位的
                 if (Build.SUPPORTED_32_BIT_ABIS.length > 0) {
                     if (extractLibs) {
                         //释放so文件
@@ -7654,7 +7662,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
                 maybeThrowExceptionForMultiArchCopy(
                         "Error unpackaging 32 bit native libs for multiarch app.", abi32);
-
+                //处理64位的，，，
                 if (Build.SUPPORTED_64_BIT_ABIS.length > 0) {
                     if (extractLibs) {
                         //释放so文件
@@ -7668,7 +7676,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
                 maybeThrowExceptionForMultiArchCopy(
                         "Error unpackaging 64 bit native libs for multiarch app.", abi64);
-
+                //设置primaryCpuAbi和secondaryCpuAbi*****************************************************************************
                 if (abi64 >= 0) {
                     pkg.applicationInfo.primaryCpuAbi = Build.SUPPORTED_64_BIT_ABIS[abi64];
                 }
@@ -7682,6 +7690,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                     }
                 }
             } else {
+                //这里只会处理32位和64位当中的一个，也就说下面只是在寻找究竟是用32位还是64位的，
                 String[] abiList = (cpuAbiOverride != null) ?
                         new String[] { cpuAbiOverride } : Build.SUPPORTED_ABIS;
 
@@ -7698,9 +7707,11 @@ public class PackageManagerService extends IPackageManager.Stub {
 
                 final int copyRet;
                 if (extractLibs) {
+                    //释放so文件，为这个app找到最适合的ABI,
                     copyRet = NativeLibraryHelper.copyNativeBinariesForSupportedAbi(handle,
                             nativeLibraryRoot, abiList, useIsaSpecificSubdirs);
                 } else {
+                    //找到最合适的ABI的下标，
                     copyRet = NativeLibraryHelper.findSupportedAbi(handle, abiList);
                 }
 
@@ -7708,7 +7719,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                     throw new PackageManagerException(INSTALL_FAILED_INTERNAL_ERROR,
                             "Error unpackaging native libs for app, errorCode=" + copyRet);
                 }
-
+                //设置primaryCpuAbi*****************************************************************************
                 if (copyRet >= 0) {
                     pkg.applicationInfo.primaryCpuAbi = abiList[copyRet];
                 } else if (copyRet == PackageManager.NO_NATIVE_LIBRARIES && cpuAbiOverride != null) {
@@ -7725,6 +7736,8 @@ public class PackageManagerService extends IPackageManager.Stub {
 
         // Now that we've calculated the ABIs and determined if it's an internal app,
         // we will go ahead and populate the nativeLibraryPath.
+
+        //其实上面主要改了pkg里面的ABI信息，
         setNativeLibraryPaths(pkg);
     }
 
@@ -11263,7 +11276,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         final String asecPath = PackageHelper.getSdFilesystem(cid);
         return !asecPath.startsWith(mAsecInternalPath);
     }
-
+    //根据copyRet，可能抛出异常，
     private static void maybeThrowExceptionForMultiArchCopy(String message, int copyRet) throws
             PackageManagerException {
         if (copyRet < 0) {
@@ -12585,11 +12598,11 @@ public class PackageManagerService extends IPackageManager.Stub {
                 return false;
         }
     }
-
+    //appplicationInfo对应的应用程序的代码是否需要运行在其他的进程里面(除了应用程序自己的进程，是否还需要运行在其他进程)
     private static boolean isMultiArch(PackageSetting ps) {
         return (ps.pkgFlags & ApplicationInfo.FLAG_MULTIARCH) != 0;
     }
-
+    //appplicationInfo对应的应用程序的代码是否需要运行在其他的进程里面(除了应用程序自己的进程，是否还需要运行在其他进程)
     private static boolean isMultiArch(ApplicationInfo info) {
         return (info.flags & ApplicationInfo.FLAG_MULTIARCH) != 0;
     }

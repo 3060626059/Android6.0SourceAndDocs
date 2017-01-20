@@ -367,7 +367,7 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
      */
     public static final int FLAG_USES_CLEARTEXT_TRAFFIC = 1<<27;
 
-    /**
+    /**设置这个标记，从apk里面是否so文件，
      * When set installer extracts native libs from .apk files.
      */
     public static final int FLAG_EXTRACT_NATIVE_LIBS = 1<<28;
@@ -378,7 +378,9 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
      */
     public static final int FLAG_HARDWARE_ACCELERATED = 1<<29;
 
-    /**
+    /**如果这个应用程序的代码需要被其他应用程序加载的话，设置这个标记，不过一般不需要设置。
+     * 在支持多种指令集的机器上，这就意味着这些代码可以加载到这个机器上另外的运行其他指令集的进程里。
+     * 系统对于设置这个标记的应用程序会特别对待，比如为所有支持的指令集是否so文件。或者编译为所有支持的指令集编译dex 代码
      * Value for {@link #flags}: true if code from this application will need to be
      * loaded into other applications' processes. On devices that support multiple
      * instruction sets, this implies the code might be loaded into a process that's

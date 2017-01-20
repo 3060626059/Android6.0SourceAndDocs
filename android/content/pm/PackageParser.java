@@ -1460,6 +1460,7 @@ public class PackageParser {
 
         /* Set the global "on SD card" flag */
         if ((flags & PARSE_EXTERNAL_STORAGE) != 0) {
+            //applicationInfo.flags不全是从AndroidManifest文件里面来的，，，，
             pkg.applicationInfo.flags |= ApplicationInfo.FLAG_EXTERNAL_STORAGE;
         }
 
@@ -1494,6 +1495,7 @@ public class PackageParser {
                 }
 
                 foundApp = true;
+                //这个里面有很多更改ApplicationInfo.flags的
                 if (!parseBaseApplication(pkg, res, parser, attrs, flags, outError)) {
                     return null;
                 }
@@ -1889,7 +1891,7 @@ public class PackageParser {
                 }
             }
         }
-
+        //设置支持屏幕尺寸和屏幕密度的信息，，，，，，，，，，，，，，，，******************************************
         if (supportsSmallScreens < 0 || (supportsSmallScreens > 0
                 && pkg.applicationInfo.targetSdkVersion
                         >= android.os.Build.VERSION_CODES.DONUT)) {
@@ -3327,6 +3329,7 @@ public class PackageParser {
         }
 
         if (!setExported) {
+            //配置了inent的话，会自动设置export属性
             a.info.exported = a.intents.size() > 0;
         }
 
