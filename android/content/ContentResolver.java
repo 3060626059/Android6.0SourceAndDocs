@@ -398,7 +398,7 @@ public abstract class ContentResolver {
         }
     }
 
-    /**
+    /**查询数据，
      * Query the given URI, returning a {@link Cursor} over the result set.
      * <p>
      * For best performance, the caller should follow these guidelines:
@@ -505,7 +505,7 @@ public abstract class ContentResolver {
             if (qCursor == null) {
                 return null;
             }
-
+            //强制执行数据库查询操作，
             // Force query execution.  Might fail and throw a runtime exception here.
             qCursor.getCount();
             long durationMillis = SystemClock.uptimeMillis() - startTime;
@@ -1452,7 +1452,7 @@ public abstract class ContentResolver {
         return acquireProvider(mContext, name);
     }
 
-    /**
+    /**返回指定uri对应的Provider
      * Returns the content provider for the given content URI.
      *
      * @param uri The URI to a content provider
@@ -1576,7 +1576,10 @@ public abstract class ContentResolver {
         return null;
     }
 
-    /**
+    /**注册观察者，
+     * 参数notifyForDescendents为false的时候那么发生数据变化的uri是我们当前注册uri的祖先(参数uri比数据变化的uri更长)或者刚好是精确匹配。
+     * 参数notifyForDescendents为true的时候除了上述变化外，还要加上另外一种，
+     * 发生数据变化的uri是我们当前注册uri的后代(参数uri比数据变化的uri更短)或者刚好是精确匹配
      * Register an observer class that gets callbacks when data identified by a
      * given content URI changes.
      *

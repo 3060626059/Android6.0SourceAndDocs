@@ -829,7 +829,7 @@ public final class ActivityManagerService extends ActivityManagerNative
 
     final ProviderMap mProviderMap;
 
-    /**
+    /**系统中所有正在加载的Content Provider都保存在mLaunchingProviders成员变量中
      * List of content providers who have clients waiting for them.  The
      * application is currently being launched and the provider will be
      * removed from this list once it is published.
@@ -3023,7 +3023,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
         return proc;
     }
-
+    //确保这个包已经做过了dex优化
     void ensurePackageDexOpt(String packageName) {
         IPackageManager pm = AppGlobals.getPackageManager();
         try {
@@ -9195,10 +9195,11 @@ public final class ActivityManagerService extends ActivityManagerNative
     // =========================================================
     // CONTENT PROVIDERS
     // =========================================================
-
+    //查询指定进程的Provider信息
     private final List<ProviderInfo> generateApplicationProvidersLocked(ProcessRecord app) {
         List<ProviderInfo> providers = null;
         try {
+            //这个地方查询到指定进程的Provider信息，
             ParceledListSlice<ProviderInfo> slice = AppGlobals.getPackageManager().
                 queryContentProviders(app.processName, app.uid,
                         STOCK_PM_FLAGS | PackageManager.GET_URI_PERMISSION_PATTERNS);
@@ -9214,6 +9215,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             for (int i=0; i<N; i++) {
                 ProviderInfo cpi =
                     (ProviderInfo)providers.get(i);
+                //判断这个组件是否设置了整个系统只有一个实例
                 boolean singleton = isSingleton(cpi.processName, cpi.applicationInfo,
                         cpi.name, cpi.flags);
                 if (singleton && UserHandle.getUserId(app.uid) != UserHandle.USER_OWNER) {
@@ -9237,6 +9239,10 @@ public final class ActivityManagerService extends ActivityManagerNative
                         "generateApplicationProvidersLocked, cpi.uid = " + cpr.uid);
                 app.pubProviders.put(cpi.name, cpr);
                 if (!cpi.multiprocess || !"android".equals(cpi.packageName)) {
+                    //不是系统进程
+                    //或者没有设置多进程属性，
+                    // 所以一般会满足
+                    //换句话说如果系统进程并且标记可以在多个进程运行，这样的组件才不用当作多个apk加入
                     // Don't add this if it is a platform component that is marked
                     // to run in multiple processes, because this is actually
                     // part of the framework so doesn't make sense to track as a
@@ -9244,6 +9250,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     app.addPackage(cpi.applicationInfo.packageName, cpi.applicationInfo.versionCode,
                             mProcessStats);
                 }
+                //确保指定的包已经优化
                 ensurePackageDexOpt(cpi.applicationInfo.packageName);
             }
         }
@@ -9437,7 +9444,11 @@ public final class ActivityManagerService extends ActivityManagerNative
             Slog.w(TAG, "Slow operation: " + (now-startTime) + "ms so far, now at " + where);
         }
     }
-
+    //获取Provider信息，
+    //callerd代表调用者
+    //name是权限信息，
+    //token有时候是null
+    //userId应该是目标Provider所在进程的userId
     private final ContentProviderHolder getContentProviderImpl(IApplicationThread caller,
             String name, IBinder token, boolean stable, int userId) {
         ContentProviderRecord cpr;
@@ -9449,6 +9460,7 @@ public final class ActivityManagerService extends ActivityManagerNative
 
             ProcessRecord r = null;
             if (caller != null) {
+                //调用者进程信息，
                 r = getRecordForAppLocked(caller);
                 if (r == null) {
                     throw new SecurityException(
@@ -9463,10 +9475,12 @@ public final class ActivityManagerService extends ActivityManagerNative
             checkTime(startTime, "getContentProviderImpl: getProviderByName");
 
             // First check if this content provider has been published...
+            //检测目标provider是否已经准备好了，这个时候可能目标进程没启动，也有可能目标provider还没初始化好，
             cpr = mProviderMap.getProviderByName(name, userId);
             // If that didn't work, check if it exists for user 0 and then
             // verify that it's a singleton provider before using it.
             if (cpr == null && userId != UserHandle.USER_OWNER) {
+                //检测user 0并且是单例的，一般不满足这个条件，
                 cpr = mProviderMap.getProviderByName(name, UserHandle.USER_OWNER);
                 if (cpr != null) {
                     cpi = cpr.info;
@@ -9484,6 +9498,7 @@ public final class ActivityManagerService extends ActivityManagerNative
 
             boolean providerRunning = cpr != null;
             if (providerRunning) {
+                //这个地方一般也不会满足，
                 cpi = cpr.info;
                 String msg;
                 checkTime(startTime, "getContentProviderImpl: before checkContentProviderPermission");
@@ -9494,6 +9509,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 checkTime(startTime, "getContentProviderImpl: after checkContentProviderPermission");
 
                 if (r != null && cpr.canRunHere(r)) {
+                    //已经准备好或者正在准备，
                     // This provider has been published or is in the process
                     // of being published...  but it is also allowed to run
                     // in the caller's process, so don't make a connection
@@ -9568,8 +9584,10 @@ public final class ActivityManagerService extends ActivityManagerNative
 
             boolean singleton;
             if (!providerRunning) {
+                //一般走的是这个，
                 try {
                     checkTime(startTime, "getContentProviderImpl: before resolveContentProvider");
+                    //name是目标provider的权限，以权限查询的，所以要求权限唯一，
                     cpi = AppGlobals.getPackageManager().
                         resolveContentProvider(name,
                             STOCK_PM_FLAGS | PackageManager.GET_URI_PERMISSION_PATTERNS, userId);
@@ -9655,6 +9673,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     // info and allow the caller to instantiate it.  Only do
                     // this if the provider is the same user as the caller's
                     // process, or can run as root (so can be in any process).
+                    //一般不满足这个，
                     return cpr.newHolder(null);
                 }
 
@@ -9665,6 +9684,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 // This is single process, and our app is now connecting to it.
                 // See if we are already in the process of launching this
                 // provider.
+                //系统中所有正在加载的Content Provider都保存在mLaunchingProviders成员变量中
                 final int N = mLaunchingProviders.size();
                 int i;
                 for (i = 0; i < N; i++) {
@@ -9676,6 +9696,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 // If the provider is not already being launched, then get it
                 // started.
                 if (i >= N) {
+                    //还没有进程正在加载目标provider
                     final long origId = Binder.clearCallingIdentity();
 
                     try {
@@ -9696,17 +9717,20 @@ public final class ActivityManagerService extends ActivityManagerNative
                         ProcessRecord proc = getProcessRecordLocked(
                                 cpi.processName, cpr.appInfo.uid, false);
                         if (proc != null && proc.thread != null) {
+                            //目标进程已经启动，
                             if (DEBUG_PROVIDER) Slog.d(TAG_PROVIDER,
                                     "Installing in existing process " + proc);
                             if (!proc.pubProviders.containsKey(cpi.name)) {
                                 checkTime(startTime, "getContentProviderImpl: scheduling install");
                                 proc.pubProviders.put(cpi.name, cpr);
                                 try {
+                                    //通知目标进程加载目标provider
                                     proc.thread.scheduleInstallProvider(cpi);
                                 } catch (RemoteException e) {
                                 }
                             }
                         } else {
+                            //目标进程没启动，启动目标进程，
                             checkTime(startTime, "getContentProviderImpl: before start process");
                             proc = startProcessLocked(cpi.processName,
                                     cpr.appInfo, false, 0, "content provider",
@@ -9746,6 +9770,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
 
         // Wait for the provider to be published...
+        //等待目标进程将目标provider加载完成，
         synchronized (cpr) {
             while (cpr.provider == null) {
                 if (cpr.launchingApp == null) {
@@ -9777,7 +9802,10 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
         return cpr != null ? cpr.newHolder(conn) : null;
     }
-
+    //获取Provider信息，
+    //callerd代表调用者
+    //name是权限信息，
+    //userId应该是目标Provider所在进程的userId
     @Override
     public final ContentProviderHolder getContentProvider(
             IApplicationThread caller, String name, int userId, boolean stable) {
@@ -9874,7 +9902,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
         }
     }
-
+    //客户端已经准备好了，
     public final void publishContentProviders(IApplicationThread caller,
             List<ContentProviderHolder> providers) {
         if (providers == null) {
@@ -9900,6 +9928,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 if (src == null || src.info == null || src.provider == null) {
                     continue;
                 }
+                //找到provider在ProcessRecord中对应的ContentProviderRecord
                 ContentProviderRecord dst = r.pubProviders.get(src.info.name);
                 if (DEBUG_MU) Slog.v(TAG_MU, "ContentProviderRecord uid = " + dst.uid);
                 if (dst != null) {
@@ -9907,6 +9936,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                     mProviderMap.putProviderByClass(comp, dst);
                     String names[] = dst.info.authority.split(";");
                     for (int j = 0; j < names.length; j++) {
+                        //这个地方是权限
                         mProviderMap.putProviderByName(names[j], dst);
                     }
 
@@ -9920,6 +9950,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                         }
                     }
                     synchronized (dst) {
+                        //这个字段用于和App通信的，
                         dst.provider = src.provider;
                         dst.proc = r;
                         dst.notifyAll();
@@ -15867,6 +15898,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         boolean result = false;
         // For apps that don't have pre-defined UIDs, check for permission
         if (UserHandle.getAppId(aInfo.uid) >= Process.FIRST_APPLICATION_UID) {
+            //是应用程序，
             if ((flags & ServiceInfo.FLAG_SINGLE_USER) != 0) {
                 if (ActivityManager.checkUidPermission(
                         INTERACT_ACROSS_USERS,
@@ -15894,7 +15926,8 @@ public final class ActivityManagerService extends ActivityManagerNative
         return result;
     }
 
-    /**
+    /**调用者和目标组件属于同一个user,或者目标组件运行在一个特殊的app里面
+     *
      * Checks to see if the caller is in the same app as the singleton
      * component, or the component is in a special app. It allows special apps
      * to export singleton components but prevents exporting singleton

@@ -159,6 +159,7 @@ final class ProcessRecord {
     // all IIntentReceivers that are registered from this process.
     final ArraySet<ReceiverList> receivers = new ArraySet<>();
     // class (String) -> ContentProviderRecord
+    //保存这个进程的provider信息，key是组件名
     final ArrayMap<String, ContentProviderRecord> pubProviders = new ArrayMap<>();
     // All ContentProviderRecord process is using
     final ArrayList<ContentProviderConnection> conProviders = new ArrayList<>();

@@ -173,7 +173,7 @@ public final class ContentService extends IContentService.Stub {
         getSyncManager();
     }
 
-    /**
+    /**注册观察者，
      * Register a content observer tied to a specific user's view of the provider.
      * @param userHandle the user whose view of the provider is to be observed.  May be
      *     the calling user without requiring any permission, otherwise the caller needs to
@@ -913,7 +913,7 @@ public final class ContentService extends IContentService.Stub {
             restoreCallingIdentity(identityToken);
         }
     }
-
+    //ContentService的主入口，
     public static ContentService main(Context context, boolean factoryTest) {
         ContentService service = new ContentService(context, factoryTest);
         ServiceManager.addService(ContentResolver.CONTENT_SERVICE_NAME, service);
@@ -935,12 +935,18 @@ public final class ContentService extends IContentService.Stub {
         }
     }
 
-    /**
+    /**树形组织，
      * Hide this class since it is not part of api,
      * but current unittest framework requires it to be public
      * @hide
      */
     public static final class ObserverNode {
+        //假如分别给content://canmeizhexue/observerA注册了A，content://canmeizhexue/observerB注册了B,content://silence/observerC注册了C
+        //那么根结点Observer有俩个孩子，分别为canmeizhexue和silence
+        //canmeizhexue有俩个孩子，分别为observerA和observerB
+        //silence有一个孩子observerC ,
+
+
         private class ObserverEntry implements IBinder.DeathRecipient {
             public final IContentObserver observer;
             public final int uid;
@@ -1024,7 +1030,7 @@ public final class ContentService extends IContentService.Stub {
                 }
             }
         }
-
+        //这里把权限部分当作第一个segment
         private String getUriSegment(Uri uri, int index) {
             if (uri != null) {
                 if (index == 0) {
@@ -1036,7 +1042,8 @@ public final class ContentService extends IContentService.Stub {
                 return null;
             }
         }
-
+        //返回uri里面segments的个数+1
+        //因为这里把权限部分当作第一个segment
         private int countUriSegments(Uri uri) {
             if (uri == null) {
                 return 0;
@@ -1064,6 +1071,7 @@ public final class ContentService extends IContentService.Stub {
 
             // Look to see if the proper child already exists
             String segment = getUriSegment(uri, index);
+            //index==0时拿到的是权限，
             if (segment == null) {
                 throw new IllegalArgumentException("Invalid Uri (" + uri + ") used for observer");
             }

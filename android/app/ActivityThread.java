@@ -195,6 +195,7 @@ public final class ActivityThread {
     boolean mDensityCompatMode;
     Configuration mConfiguration;
     Configuration mCompatConfiguration;
+    //保存的是启动这个进程的时候创建的那个Application，
     Application mInitialApplication;
     final ArrayList<Application> mAllApplications
             = new ArrayList<Application>();
@@ -233,7 +234,7 @@ public final class ActivityThread {
     Configuration mPendingConfiguration = null;
 
     private final ResourcesManager mResourcesManager;
-
+    //数据结构，保存权限和userId
     private static final class ProviderKey {
         final String authority;
         final int userId;
@@ -350,7 +351,7 @@ public final class ActivityThread {
     }
 
     final class ProviderClientRecord {
-        final String[] mNames;
+        final String[] mNames;//权限，
         final IContentProvider mProvider;
         final ContentProvider mLocalProvider;
         final IActivityManager.ContentProviderHolder mHolder;
@@ -3442,7 +3443,7 @@ public final class ActivityThread {
             }
         }
     }
-
+    //单纯的数据结构
     private static final class ProviderRefCount {
         public final IActivityManager.ContentProviderHolder holder;
         public final ProviderClientRecord client;
@@ -4708,7 +4709,7 @@ public final class ActivityThread {
             if (!data.restrictedBackupMode) {
                 List<ProviderInfo> providers = data.providers;
                 if (providers != null) {
-                    //安装provider
+                    //安装provider,,,context参数传的是Application
                     installContentProviders(app, providers);
                     // For process that contains content providers, we want to
                     // ensure that the JIT is enabled "at some point".
@@ -4754,7 +4755,8 @@ public final class ActivityThread {
         } catch (RemoteException ex) {
         }
     }
-
+    //客户端App初始化ConentProvider
+    //在handleBindApplication调用这个函数的时候context传的是Applicaion,
     private void installContentProviders(
             Context context, List<ProviderInfo> providers) {
         final ArrayList<IActivityManager.ContentProviderHolder> results =
@@ -4769,6 +4771,7 @@ public final class ActivityThread {
                 buf.append(cpi.name);
                 Log.i(TAG, buf.toString());
             }
+            //安装ConentProvider，初始化,进行永久安装(noReleaseNeeded==true)
             IActivityManager.ContentProviderHolder cph = installProvider(context, null, cpi,
                     false /*noisy*/, true /*noReleaseNeeded*/, true /*stable*/);
             if (cph != null) {
@@ -4778,14 +4781,18 @@ public final class ActivityThread {
         }
 
         try {
+            //通知AMS,provider准备好了，
             ActivityManagerNative.getDefault().publishContentProviders(
                 getApplicationThread(), results);
         } catch (RemoteException ex) {
         }
     }
-
+    //获取IContentProvider,
+    //参数c一般是ContextImpl
+    //参数userId是当前进程的userId，还是Provider所在进程的userId,,,猜测应该是Provider所在进程的UserId
     public final IContentProvider acquireProvider(
             Context c, String auth, int userId, boolean stable) {
+        //如果这个Provider是我们自己的，那么这个地方已经直接返回了，
         final IContentProvider provider = acquireExistingProvider(c, auth, userId, stable);
         if (provider != null) {
             return provider;
@@ -4882,10 +4889,11 @@ public final class ActivityThread {
             }
         }
     }
-
+    //获取已经缓存过的IContentProvider,
     public final IContentProvider acquireExistingProvider(
             Context c, String auth, int userId, boolean stable) {
         synchronized (mProviderMap) {
+            //这个权限已经是真正的权限了，
             final ProviderKey key = new ProviderKey(auth, userId);
             final ProviderClientRecord pr = mProviderMap.get(key);
             if (pr == null) {
@@ -4895,6 +4903,7 @@ public final class ActivityThread {
             IContentProvider provider = pr.mProvider;
             IBinder jBinder = provider.asBinder();
             if (!jBinder.isBinderAlive()) {
+                //拥有这个Provider的进程已经死了，
                 // The hosting process of the provider has died; we can't
                 // use this one.
                 Log.i(TAG, "Acquiring provider " + auth + " for user " + userId
@@ -5093,10 +5102,12 @@ public final class ActivityThread {
             }
         }
     }
-
+    //构造ProviderClientRecord,保存权限到ProviderClientRecord映射关系
     private ProviderClientRecord installProviderAuthoritiesLocked(IContentProvider provider,
             ContentProvider localProvider, IActivityManager.ContentProviderHolder holder) {
+        //权限，已特定分隔符分号;分割，
         final String auths[] = holder.info.authority.split(";");
+        //这个userId是Provider所在用户的userId
         final int userId = UserHandle.getUserId(holder.info.applicationInfo.uid);
 
         final ProviderClientRecord pcr = new ProviderClientRecord(
@@ -5116,7 +5127,9 @@ public final class ActivityThread {
 
     /**
      * Installs the provider.
-     *
+     * //contentProvider有俩种类型的，
+     *1.本进程的Provider或者来自systemServer进程的Provider可以永久安装(通过参数来启用这个永久安装机制)
+     * 2.其他类型的Provider是引用计数机制的，
      * Providers that are local to the process or that come from the system server
      * may be installed permanently which is indicated by setting noReleaseNeeded to true.
      * Other remote providers are reference counted.  The initial reference count
@@ -5161,9 +5174,11 @@ public final class ActivityThread {
                 return null;
             }
             try {
+                //PathClassLoader
                 final java.lang.ClassLoader cl = c.getClassLoader();
                 localProvider = (ContentProvider)cl.
                     loadClass(info.name).newInstance();
+                //返回的是ContentProvider里面的Transport（ContentProviderNative的子类）
                 provider = localProvider.getIContentProvider();
                 if (provider == null) {
                     Slog.e(TAG, "Failed to instantiate class " +
@@ -5184,6 +5199,7 @@ public final class ActivityThread {
                 return null;
             }
         } else {
+            //其他进程的Provider,这个provider字段肯定不会为null
             provider = holder.provider;
             if (DEBUG_PROVIDER) Slog.v(TAG, "Installing external provider " + info.authority + ": "
                     + info.name);
@@ -5196,6 +5212,7 @@ public final class ActivityThread {
                     + " / " + info.name);
             IBinder jBinder = provider.asBinder();
             if (localProvider != null) {
+                //本进程的Provider一般走这个流程
                 ComponentName cname = new ComponentName(info.packageName, info.name);
                 ProviderClientRecord pr = mLocalProvidersByName.get(cname);
                 if (pr != null) {
@@ -5214,6 +5231,7 @@ public final class ActivityThread {
                 }
                 retHolder = pr.mHolder;
             } else {
+                //其他进程的Provider基于引用计数
                 ProviderRefCount prc = mProviderRefCountMap.get(jBinder);
                 if (prc != null) {
                     if (DEBUG_PROVIDER) {
@@ -5233,6 +5251,7 @@ public final class ActivityThread {
                         }
                     }
                 } else {
+                    //这个地方的localProvider是null,
                     ProviderClientRecord client = installProviderAuthoritiesLocked(
                             provider, localProvider, holder);
                     if (noReleaseNeeded) {

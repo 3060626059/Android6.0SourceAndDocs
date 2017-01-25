@@ -82,7 +82,8 @@ final class ContentProviderRecord {
         holder.connection = conn;
         return holder;
     }
-
+    //判断目标provider是否可以运行在请求者进程里面，必要条件要求调用者和目标进程有一样的uid,
+    //目标组件设置了多进程属性
     public boolean canRunHere(ProcessRecord app) {
         return (info.multiprocess || info.processName.equals(app.processName))
                 && uid == app.info.uid;

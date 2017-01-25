@@ -75,7 +75,7 @@ public final class ProviderInfo extends ComponentInfo
      *  running in the same process.  Higher goes first. */
     public int initOrder = 0;
 
-    /**
+    /**如果设置了这个，那么这个Provider在系统中只会有一个实例，
      * Bit in {@link #flags}: If set, a single instance of the provider will
      * run for all users on the device.  Set from the
      * {@link android.R.attr#singleUser} attribute.

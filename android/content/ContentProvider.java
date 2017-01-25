@@ -207,6 +207,7 @@ public abstract class ContentProvider implements ComponentCallbacks2 {
                 String selection, String[] selectionArgs, String sortOrder,
                 ICancellationSignal cancellationSignal) {
             validateIncomingUri(uri);
+            //uri里面也有可能有userId,,
             uri = getUriWithoutUserId(uri);
             if (enforceReadPermission(callingPkg, uri, null) != AppOpsManager.MODE_ALLOWED) {
                 // The caller has no access to the data, so return an empty cursor with
@@ -756,7 +757,7 @@ public abstract class ContentProvider implements ComponentCallbacks2 {
     }
 
 
-    /**
+    /**改变从这个Provider读取数据需要的权限，
      * Change the permission required to read data from the content
      * provider.  This is normally set for you from its manifest information
      * when the provider is first created.
@@ -778,7 +779,7 @@ public abstract class ContentProvider implements ComponentCallbacks2 {
         return mReadPermission;
     }
 
-    /**
+    /**改变从这个Provider读取和写入数据需要的权限
      * Change the permission required to read and write data in the content
      * provider.  This is normally set for you from its manifest information
      * when the provider is first created.
@@ -800,7 +801,7 @@ public abstract class ContentProvider implements ComponentCallbacks2 {
         return mWritePermission;
     }
 
-    /**
+    /**改变从这个Provider读取和写入数据需要的基于路径的权限
      * Change the path-based permission required to read and/or write data in
      * the content provider.  This is normally set for you from its manifest
      * information when the provider is first created.
@@ -1840,7 +1841,7 @@ public abstract class ContentProvider implements ComponentCallbacks2 {
         writer.println("nothing to dump");
     }
 
-    /** @hide */
+    /** 验证uri的权限，，@hide */
     private void validateIncomingUri(Uri uri) throws SecurityException {
         String auth = uri.getAuthority();
         int userId = getUserIdFromAuthority(auth, UserHandle.USER_CURRENT);
@@ -1862,6 +1863,7 @@ public abstract class ContentProvider implements ComponentCallbacks2 {
 
     /** @hide */
     public static int getUserIdFromAuthority(String auth, int defaultUserId) {
+        //从权限里面提取userId,这个信息一般在权限的前面,
         if (auth == null) return defaultUserId;
         int end = auth.lastIndexOf('@');
         if (end == -1) return defaultUserId;
@@ -1890,7 +1892,7 @@ public abstract class ContentProvider implements ComponentCallbacks2 {
         return getUserIdFromUri(uri, UserHandle.USER_CURRENT);
     }
 
-    /**
+    /**去除权限里面的userId,也就是说权限里面可能有userId
      * Removes userId part from authority string. Expects format:
      * userId@some.authority
      * If there is no userId in the authority, it symply returns the argument

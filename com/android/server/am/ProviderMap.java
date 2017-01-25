@@ -44,25 +44,23 @@ public final class ProviderMap {
     private static final boolean DBG = false;
 
     private final ActivityManagerService mAm;
-
+    //保存的是单例Provider的映射，key是权限，一个Provider可以有多个权限，
     private final HashMap<String, ContentProviderRecord> mSingletonByName
             = new HashMap<String, ContentProviderRecord>();
+    //保存的是单例Provider的映射
     private final HashMap<ComponentName, ContentProviderRecord> mSingletonByClass
             = new HashMap<ComponentName, ContentProviderRecord>();
-
+    //每个用户都有一个Map
     private final SparseArray<HashMap<String, ContentProviderRecord>> mProvidersByNamePerUser
             = new SparseArray<HashMap<String, ContentProviderRecord>>();
+    //每个用户都有一个Map
     private final SparseArray<HashMap<ComponentName, ContentProviderRecord>> mProvidersByClassPerUser
             = new SparseArray<HashMap<ComponentName, ContentProviderRecord>>();
 
     ProviderMap(ActivityManagerService am) {
         mAm = am;
     }
-
-    ContentProviderRecord getProviderByName(String name) {
-        return getProviderByName(name, -1);
-    }
-
+    //name是权限，    //userId是Provider所在进程的userId，
     ContentProviderRecord getProviderByName(String name, int userId) {
         if (DBG) {
             Slog.i(TAG, "getProviderByName: " + name + " , callingUid = " + Binder.getCallingUid());
@@ -76,11 +74,11 @@ public final class ProviderMap {
         // Check the current user's list
         return getProvidersByName(userId).get(name);
     }
-
+    //通过组件信息获取Provider信息，
     ContentProviderRecord getProviderByClass(ComponentName name) {
         return getProviderByClass(name, -1);
     }
-
+    //通过组件信息获取Provider信息，
     ContentProviderRecord getProviderByClass(ComponentName name, int userId) {
         if (DBG) {
             Slog.i(TAG, "getProviderByClass: " + name + ", callingUid = " + Binder.getCallingUid());
@@ -92,9 +90,10 @@ public final class ProviderMap {
         }
 
         // Check the current user's list
+        //检查用户对应的Map里面有没有这个Provider
         return getProvidersByClass(userId).get(name);
     }
-
+    //name是权限，
     void putProviderByName(String name, ContentProviderRecord record) {
         if (DBG) {
             Slog.i(TAG, "putProviderByName: " + name + " , callingUid = " + Binder.getCallingUid()
@@ -107,7 +106,7 @@ public final class ProviderMap {
             getProvidersByName(userId).put(name, record);
         }
     }
-
+    //保存Provider信息，
     void putProviderByClass(ComponentName name, ContentProviderRecord record) {
         if (DBG) {
             Slog.i(TAG, "putProviderByClass: " + name + " , callingUid = " + Binder.getCallingUid()
@@ -170,7 +169,7 @@ public final class ProviderMap {
             return map;
         }
     }
-
+    //每个用户都有一个Map
     HashMap<ComponentName, ContentProviderRecord> getProvidersByClass(int userId) {
         if (userId < 0) throw new IllegalArgumentException("Bad user " + userId);
         final HashMap<ComponentName, ContentProviderRecord> map

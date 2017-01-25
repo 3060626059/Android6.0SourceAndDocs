@@ -1995,7 +1995,7 @@ class ContextImpl extends Context {
 
         public ApplicationContentResolver(
                 Context context, ActivityThread mainThread, UserHandle user) {
-            super(context);
+            super(context);//这个context是ContextImpl
             mMainThread = Preconditions.checkNotNull(mainThread);
             mUser = Preconditions.checkNotNull(user);
         }

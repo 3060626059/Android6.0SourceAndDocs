@@ -6210,7 +6210,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                     false /* force dex */, false /* defer */, true /* include dependencies */);
         }
     }
-
+    //对指定的包进行dex优化
     @Override
     public boolean performDexOptIfNeeded(String packageName, String instructionSet) {
         return performDexOpt(packageName, instructionSet, false);
