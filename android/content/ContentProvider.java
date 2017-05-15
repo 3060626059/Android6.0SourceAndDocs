@@ -539,7 +539,7 @@ public abstract class ContentProvider implements ComponentCallbacks2 {
         final int uid = Binder.getCallingUid();
         String missingPerm = null;
         int strongestMode = MODE_ALLOWED;
-
+        //调用者和自己是同一个app,
         if (UserHandle.isSameApp(uid, mMyUid)) {
             return MODE_ALLOWED;
         }
@@ -742,7 +742,7 @@ public abstract class ContentProvider implements ComponentCallbacks2 {
         }
     }
 
-    /** @hide */
+    /** @hide 权限检查*/
     protected final boolean matchesOurAuthorities(String authority) {
         if (mAuthority != null) {
             return mAuthority.equals(authority);
@@ -1844,7 +1844,10 @@ public abstract class ContentProvider implements ComponentCallbacks2 {
     /** 验证uri的权限，，@hide */
     private void validateIncomingUri(Uri uri) throws SecurityException {
         String auth = uri.getAuthority();
+        //UserHandle.USER_CURRENT==-2,代表当前用户，
         int userId = getUserIdFromAuthority(auth, UserHandle.USER_CURRENT);
+        //用户id检查，这个地方是否说明如果给一个uri授权的话，这个uri里面会带有授权者信息？？？
+        //从uri里面提取出来的userId
         if (userId != UserHandle.USER_CURRENT && userId != mContext.getUserId()) {
             throw new SecurityException("trying to query a ContentProvider in user "
                     + mContext.getUserId() + " with a uri belonging to user " + userId);

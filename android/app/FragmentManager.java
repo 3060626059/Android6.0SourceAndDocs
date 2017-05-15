@@ -450,12 +450,14 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
     
     ArrayList<Fragment> mActive;
     ArrayList<Fragment> mAdded;
+    //标记mActive哪个位置是null
     ArrayList<Integer> mAvailIndices;
     ArrayList<BackStackRecord> mBackStack;
     ArrayList<Fragment> mCreatedMenus;
     
     // Must be accessed while locked.
     ArrayList<BackStackRecord> mBackStackIndices;
+    //保存的是mBackStackIndices对应的元素为null的下标信息，
     ArrayList<Integer> mAvailBackStackIndices;
 
     ArrayList<OnBackStackChangedListener> mBackStackChangeListeners;
@@ -868,7 +870,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             moveToState(f, mCurState, 0, 0, false);
         }
     }
-
+    //将指定的fragment推向指定的状态，
     void moveToState(Fragment f, int newState, int transit, int transitionStyle,
             boolean keepActive) {
         if (DEBUG && false) Log.v(TAG, "moveToState: " + f
@@ -1129,7 +1131,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
     void moveToState(int newState, boolean always) {
         moveToState(newState, 0, 0, always);
     }
-    
+    //将fragmentManager里面的mActive数组里面的fragment都推向fragmentManager当前的状态，
     void moveToState(int newState, int transit, int transitStyle, boolean always) {
         if (mHost == null && newState != Fragment.INITIALIZING) {
             throw new IllegalStateException("No activity");
@@ -1173,8 +1175,9 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             }
         }
     }
-
+    //将指定的fragment添加到mActive数组中，
     void makeActive(Fragment f) {
+        //说明已经在mActive数组中，
         if (f.mIndex >= 0) {
             return;
         }
@@ -1192,8 +1195,9 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
         if (DEBUG) Log.v(TAG, "Allocated fragment index " + f);
     }
-    
+    //将指定的fragment移除出mActive数组，
     void makeInactive(Fragment f) {
+        //说明已经不在mActive数组中，
         if (f.mIndex < 0) {
             return;
         }
@@ -1207,7 +1211,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         mHost.inactivateFragment(f.mWho);
         f.initState();
     }
-    
+    //添加fragment，
     public void addFragment(Fragment fragment, boolean moveToStateNow) {
         if (mAdded == null) {
             mAdded = new ArrayList<Fragment>();
@@ -1224,6 +1228,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             if (fragment.mHasMenu && fragment.mMenuVisible) {
                 mNeedMenuInvalidate = true;
             }
+            //是否将这个fragment推向指定的状态，
             if (moveToStateNow) {
                 moveToState(fragment);
             }
@@ -1233,6 +1238,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
     public void removeFragment(Fragment fragment, int transition, int transitionStyle) {
         if (DEBUG) Log.v(TAG, "remove: " + fragment + " nesting=" + fragment.mBackStackNesting);
         final boolean inactive = !fragment.isInBackStack();
+        //删除不在后退栈里面的fragment，
         if (!fragment.mDetached || inactive) {
             if (false) {
                 // Would be nice to catch a bad remove here, but we need
@@ -1250,11 +1256,12 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             }
             fragment.mAdded = false;
             fragment.mRemoving = true;
+            //将指定的fragment推向指定的状态，不在后退栈的时候推向INITIALIZING，在后退栈的时候推向CREATED
             moveToState(fragment, inactive ? Fragment.INITIALIZING : Fragment.CREATED,
                     transition, transitionStyle, false);
         }
     }
-    
+    //隐藏fragment，支持动画，
     public void hideFragment(Fragment fragment, int transition, int transitionStyle) {
         if (DEBUG) Log.v(TAG, "hide: " + fragment);
         if (!fragment.mHidden) {
@@ -1287,7 +1294,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             fragment.onHiddenChanged(true);
         }
     }
-    
+    //显示fragment，支持动画，
     public void showFragment(Fragment fragment, int transition, int transitionStyle) {
         if (DEBUG) Log.v(TAG, "show: " + fragment);
         if (fragment.mHidden) {
@@ -1308,7 +1315,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             fragment.onHiddenChanged(false);
         }
     }
-    
+    //脱离，
     public void detachFragment(Fragment fragment, int transition, int transitionStyle) {
         if (DEBUG) Log.v(TAG, "detach: " + fragment);
         if (!fragment.mDetached) {
@@ -1327,7 +1334,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             }
         }
     }
-
+    //附加
     public void attachFragment(Fragment fragment, int transition, int transitionStyle) {
         if (DEBUG) Log.v(TAG, "attach: " + fragment);
         if (fragment.mDetached) {
@@ -1405,7 +1412,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
         return null;
     }
-    
+    //检测是否会状态丢失，
     private void checkStateLoss() {
         if (mStateSaved) {
             throw new IllegalStateException(
@@ -1417,7 +1424,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
     }
 
-    /**
+    /**提交一个runnable,稍后执行，
      * Adds an action to the queue of pending actions.
      *
      * @param action the action to add
@@ -1442,7 +1449,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             }
         }
     }
-    
+    //从下标数组里面找到一个下班，，这里还没有加到回退栈里面，
     public int allocBackStackIndex(BackStackRecord bse) {
         synchronized (this) {
             if (mAvailBackStackIndices == null || mAvailBackStackIndices.size() <= 0) {
@@ -1462,7 +1469,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             }
         }
     }
-
+    //将mBackStackIndices的指定下标更新为对应的BackStackRecord
     public void setBackStackIndex(int index, BackStackRecord bse) {
         synchronized (this) {
             if (mBackStackIndices == null) {
@@ -1554,7 +1561,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
         return didSomething;
     }
-
+    //报告后退栈已经发生了变化，
     void reportBackStackChanged() {
         if (mBackStackChangeListeners != null) {
             for (int i=0; i<mBackStackChangeListeners.size(); i++) {
@@ -1562,7 +1569,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             }
         }
     }
-
+    //将BackStackRecord添加到后退栈
     void addBackStackState(BackStackRecord state) {
         if (mBackStack == null) {
             mBackStack = new ArrayList<BackStackRecord>();
@@ -1643,7 +1650,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
         return true;
     }
-    
+    //这些fragment在activity重启的时候不需要重启，这些fragment是保存在mActive数组里面的某些特殊fragment
     ArrayList<Fragment> retainNonConfig() {
         ArrayList<Fragment> fragments = null;
         if (mActive != null) {
@@ -1662,7 +1669,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
         return fragments;
     }
-    
+    //保存指定fragment的view的状态，
     void saveFragmentViewState(Fragment f) {
         if (f.mView == null) {
             return;
@@ -1678,7 +1685,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             mStateArray = null;
         }
     }
-    
+    //保存指定fragment的数据状态和view的状态
     Bundle saveFragmentBasicState(Fragment f) {
         Bundle result = null;
 
@@ -1711,24 +1718,28 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
 
         return result;
     }
-
+    //保存这个FragmentManager的状态信息，包括保存这个fragmentManager管理的fragment的状态信息，但是fragment还有子fragment呢，也是在这里保存的？？
     Parcelable saveAllState() {
         // Make sure all pending operations have now been executed to get
         // our state update-to-date.
+        //执行完之前的延迟操作，
         execPendingActions();
 
         mStateSaved = true;
-
+        //这个地方判断的还是mActive数组，，，
         if (mActive == null || mActive.size() <= 0) {
             return null;
         }
         
         // First collect all active fragments.
+        //保存mActive数组信息，
         int N = mActive.size();
+        //fragment状态保存对应的类就是FragmentState,
         FragmentState[] active = new FragmentState[N];
         boolean haveFragments = false;
         for (int i=0; i<N; i++) {
             Fragment f = mActive.get(i);
+            //mActive里面还有可能为null
             if (f != null) {
                 if (f.mIndex < 0) {
                     throwException(new IllegalStateException(
@@ -1740,10 +1751,10 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
 
                 FragmentState fs = new FragmentState(f);
                 active[i] = fs;
-                
+                //判断fragment的状态，不但fragment有状态，fragmentManager也有状态，
                 if (f.mState > Fragment.INITIALIZING && fs.mSavedFragmentState == null) {
                     fs.mSavedFragmentState = saveFragmentBasicState(f);
-
+                    //这个到底是什么？？？？
                     if (f.mTarget != null) {
                         if (f.mTarget.mIndex < 0) {
                             throwException(new IllegalStateException(
@@ -1776,15 +1787,18 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             return null;
         }
         
-        int[] added = null;
+        int[] added = null;//对应的mAdded里面的fragment在mActive里面的下标信息？？
         BackStackState[] backStack = null;
         
         // Build list of currently added fragments.
+        //保存mAdded数组，，，，
         if (mAdded != null) {
             N = mAdded.size();
             if (N > 0) {
                 added = new int[N];
                 for (int i=0; i<N; i++) {
+                    //mIndex是在mActive里面的下标位置？？？
+                    //mAdded里面数组元素不会为null
                     added[i] = mAdded.get(i).mIndex;
                     if (added[i] < 0) {
                         throwException(new IllegalStateException(
@@ -1798,6 +1812,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
         
         // Now save back stack.
+        //保存回退栈信息，每一个BackStackRecord对应一个BackStackState,,,
         if (mBackStack != null) {
             N = mBackStack.size();
             if (N > 0) {
@@ -1816,7 +1831,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         fms.mBackStack = backStack;
         return fms;
     }
-    
+    //恢复状态，有一些fragment在Activity重建的时候这些fragment不需要重建，，，但是程序员保存的状态和view的状态都不在这里恢复，
     void restoreAllState(Parcelable state, List<Fragment> nonConfig) {
         // If there is no saved state at all, then there can not be
         // any nonConfig fragments either, so that is that.
@@ -1826,6 +1841,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         
         // First re-attach any non-config instances we are retaining back
         // to their saved state, so we don't try to instantiate them again.
+        //处理重建Activity的时候不需要重建的fragment，
         if (nonConfig != null) {
             for (int i=0; i<nonConfig.size(); i++) {
                 Fragment f = nonConfig.get(i);
@@ -1848,6 +1864,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         
         // Build the full list of active fragments, instantiating them from
         // their saved state.
+        //恢复mActive数组，，，
         mActive = new ArrayList<Fragment>(fms.mActive.length);
         if (mAvailIndices != null) {
             mAvailIndices.clear();
@@ -1855,6 +1872,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         for (int i=0; i<fms.mActive.length; i++) {
             FragmentState fs = fms.mActive[i];
             if (fs != null) {
+                //这个里面不会恢复程序员主动保存的状态和view的状态
                 Fragment f = fs.instantiate(mHost, mParent);
                 if (DEBUG) Log.v(TAG, "restoreAllState: active #" + i + ": " + f);
                 mActive.add(f);
@@ -1863,16 +1881,19 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                 // from this FragmentState again.
                 fs.mInstance = null;
             } else {
+                //对应的mActivie数组元素为null,
                 mActive.add(null);
                 if (mAvailIndices == null) {
                     mAvailIndices = new ArrayList<Integer>();
                 }
                 if (DEBUG) Log.v(TAG, "restoreAllState: avail #" + i);
+                //标记mActive哪个位置是null,
                 mAvailIndices.add(i);
             }
         }
         
         // Update the target of all retained fragments.
+        //更新retained fragment 的target信息，
         if (nonConfig != null) {
             for (int i=0; i<nonConfig.size(); i++) {
                 Fragment f = nonConfig.get(i);
@@ -1889,6 +1910,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
 
         // Build the list of currently added fragments.
+        //构建mAdded数组信息，
         if (fms.mAdded != null) {
             mAdded = new ArrayList<Fragment>(fms.mAdded.length);
             for (int i=0; i<fms.mAdded.length; i++) {
@@ -1909,6 +1931,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
         
         // Build the back stack.
+        //恢复回退栈信息，
         if (fms.mBackStack != null) {
             mBackStack = new ArrayList<BackStackRecord>(fms.mBackStack.length);
             for (int i=0; i<fms.mBackStack.length; i++) {

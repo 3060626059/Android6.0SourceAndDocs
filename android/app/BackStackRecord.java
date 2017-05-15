@@ -111,7 +111,7 @@ final class BackStackState implements Parcelable {
         mSharedElementSourceNames = in.createStringArrayList();
         mSharedElementTargetNames = in.createStringArrayList();
     }
-
+    //从BackStackState恢复BackStackRecord
     public BackStackRecord instantiate(FragmentManagerImpl fm) {
         BackStackRecord bse = new BackStackRecord(fm);
         int pos = 0;
@@ -426,11 +426,13 @@ final class BackStackRecord extends FragmentTransaction implements
         }
         return mBreadCrumbShortTitleText;
     }
-
+    //一个事务可能有多个操作，
     void addOp(Op op) {
         if (mHead == null) {
             mHead = mTail = op;
         } else {
+            //这是双向链表，
+            //在末尾添加
             op.prev = mTail;
             mTail.next = op;
             mTail = op;
@@ -441,7 +443,7 @@ final class BackStackRecord extends FragmentTransaction implements
         op.popExitAnim = mPopExitAnim;
         mNumOp++;
     }
-
+    //有一个可以不用containerViewId的add方法，
     public FragmentTransaction add(Fragment fragment, String tag) {
         doAddOp(0, fragment, tag, OP_ADD);
         return this;
@@ -483,7 +485,7 @@ final class BackStackRecord extends FragmentTransaction implements
         op.fragment = fragment;
         addOp(op);
     }
-
+    //替换操作，
     public FragmentTransaction replace(int containerViewId, Fragment fragment) {
         return replace(containerViewId, fragment, null);
     }
@@ -496,7 +498,7 @@ final class BackStackRecord extends FragmentTransaction implements
         doAddOp(containerViewId, fragment, tag, OP_REPLACE);
         return this;
     }
-
+    //移除fragment，
     public FragmentTransaction remove(Fragment fragment) {
         Op op = new Op();
         op.cmd = OP_REMOVE;
@@ -505,7 +507,7 @@ final class BackStackRecord extends FragmentTransaction implements
 
         return this;
     }
-
+    //隐藏，
     public FragmentTransaction hide(Fragment fragment) {
         Op op = new Op();
         op.cmd = OP_HIDE;
@@ -514,7 +516,7 @@ final class BackStackRecord extends FragmentTransaction implements
 
         return this;
     }
-
+    //显示，
     public FragmentTransaction show(Fragment fragment) {
         Op op = new Op();
         op.cmd = OP_SHOW;
@@ -523,7 +525,7 @@ final class BackStackRecord extends FragmentTransaction implements
 
         return this;
     }
-
+    //脱离
     public FragmentTransaction detach(Fragment fragment) {
         Op op = new Op();
         op.cmd = OP_DETACH;
@@ -532,7 +534,7 @@ final class BackStackRecord extends FragmentTransaction implements
 
         return this;
     }
-
+    //附加，
     public FragmentTransaction attach(Fragment fragment) {
         Op op = new Op();
         op.cmd = OP_ATTACH;
@@ -658,7 +660,7 @@ final class BackStackRecord extends FragmentTransaction implements
             op = op.next;
         }
     }
-
+    //提交的时候就去检测是否会丢失状态，
     public int commit() {
         return commitInternal(false);
     }
@@ -666,7 +668,7 @@ final class BackStackRecord extends FragmentTransaction implements
     public int commitAllowingStateLoss() {
         return commitInternal(true);
     }
-
+    //一个事务只能提交一次，
     int commitInternal(boolean allowStateLoss) {
         if (mCommitted) {
             throw new IllegalStateException("commit already called");
@@ -679,6 +681,7 @@ final class BackStackRecord extends FragmentTransaction implements
             pw.flush();
         }
         mCommitted = true;
+        //这个事务是否添加到回退栈，，，
         if (mAddToBackStack) {
             mIndex = mManager.allocBackStackIndex(this);
         } else {
@@ -687,7 +690,7 @@ final class BackStackRecord extends FragmentTransaction implements
         mManager.enqueueAction(this, allowStateLoss);
         return mIndex;
     }
-
+    //真正的事务执行代码，
     public void run() {
         if (FragmentManagerImpl.DEBUG) {
             Log.v(TAG, "Run: " + this);
@@ -705,17 +708,19 @@ final class BackStackRecord extends FragmentTransaction implements
         SparseArray<Fragment> lastInFragments = new SparseArray<Fragment>();
         calculateFragments(firstOutFragments, lastInFragments);
         beginTransition(firstOutFragments, lastInFragments, false);
-
+        //双向链表，从头到尾开始遍历，
         Op op = mHead;
         while (op != null) {
             switch (op.cmd) {
                 case OP_ADD: {
                     Fragment f = op.fragment;
                     f.mNextAnim = op.enterAnim;
+                    //添加操作，，
                     mManager.addFragment(f, false);
                 }
                 break;
                 case OP_REPLACE: {
+                    //替换操作是先移除旧的，再添加新的，
                     Fragment f = op.fragment;
                     int containerId = f.mContainerId;
                     if (mManager.mAdded != null) {
@@ -727,11 +732,13 @@ final class BackStackRecord extends FragmentTransaction implements
                             }
                             if (old.mContainerId == containerId) {
                                 if (old == f) {
+                                    //替换的是fragment自己，
                                     op.fragment = f = null;
                                 } else {
                                     if (op.removed == null) {
                                         op.removed = new ArrayList<Fragment>();
                                     }
+                                    //删除了哪些fragment，
                                     op.removed.add(old);
                                     old.mNextAnim = op.exitAnim;
                                     if (mAddToBackStack) {
@@ -789,7 +796,7 @@ final class BackStackRecord extends FragmentTransaction implements
 
             op = op.next;
         }
-
+        //将这次事务的fragment推向正确的状态，
         mManager.moveToState(mManager.mCurState, mTransition,
                 mTransitionStyle, true);
 

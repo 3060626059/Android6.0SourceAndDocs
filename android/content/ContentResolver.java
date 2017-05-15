@@ -1631,7 +1631,7 @@ public abstract class ContentResolver {
         }
     }
 
-    /**
+    /**向ContentService中心报告参数uri代表的数据已经发生改变，参数observer可能代表造成这个变化的组件
      * Notify registered observers that a row was updated and attempt to sync changes
      * to the network.
      * To register, call {@link #registerContentObserver(android.net.Uri , boolean, android.database.ContentObserver) registerContentObserver()}.

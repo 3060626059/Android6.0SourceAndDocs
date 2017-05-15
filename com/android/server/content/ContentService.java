@@ -233,7 +233,7 @@ public final class ContentService extends IContentService.Stub {
         }
     }
 
-    /**
+    /**参数observer代表这个更新的触发者，可能为null，
      * Notify observers of a particular user's view of the provider.
      * @param userHandle the user whose view of the provider is to be notified.  May be
      *     the calling user without requiring any permission, otherwise the caller needs to
@@ -249,7 +249,7 @@ public final class ContentService extends IContentService.Stub {
             Log.v(TAG, "Notifying update of " + uri + " for user " + userHandle
                     + " from observer " + observer + ", syncToNetwork " + syncToNetwork);
         }
-
+        //多用户目前只用在平板上，目前的userId都是一样的，是单用户。
         final int uid = Binder.getCallingUid();
         final int pid = Binder.getCallingPid();
         final int callingUserHandle = UserHandle.getCallingUserId();
@@ -945,6 +945,16 @@ public final class ContentService extends IContentService.Stub {
         //那么根结点Observer有俩个孩子，分别为canmeizhexue和silence
         //canmeizhexue有俩个孩子，分别为observerA和observerB
         //silence有一个孩子observerC ,
+        //observerA这个时候暂时没有孩子结点，但是它的mObservers里面会有一个元素代表A，
+        //observerB这个时候暂时没有孩子结点，但是它的mObservers里面会有一个元素代表B，
+
+        //所以这个时候整个树就像下面这样
+        //mRootNode("")
+        //      --ObserverNode("canmeizhexue")
+        //          --ObserverNode("observerA")  --mObservers里面包含一个代表A的ObserverEntry
+        //          --ObserverNode("observerB")  --mObservers里面包含一个代表B的ObserverEntry
+        //      --ObserverNode("silence")
+        //          --ObserverNode("observerC")  --mObservers里面包含一个代表C的ObserverEntry
 
 
         private class ObserverEntry implements IBinder.DeathRecipient {
@@ -1063,6 +1073,7 @@ public final class ContentService extends IContentService.Stub {
                 boolean notifyForDescendants, Object observersLock,
                 int uid, int pid, int userHandle) {
             // If this is the leaf node add the observer
+            //到达叶子结点，
             if (index == countUriSegments(uri)) {
                 mObservers.add(new ObserverEntry(observer, notifyForDescendants, observersLock,
                         uid, pid, userHandle));
@@ -1075,6 +1086,7 @@ public final class ContentService extends IContentService.Stub {
             if (segment == null) {
                 throw new IllegalArgumentException("Invalid Uri (" + uri + ") used for observer");
             }
+            //找到一个合适的子结点，然后在子结点里面添加。
             int N = mChildren.size();
             for (int i = 0; i < N; i++) {
                 ObserverNode node = mChildren.get(i);
@@ -1133,6 +1145,7 @@ public final class ContentService extends IContentService.Stub {
                 // in self notifications
                 boolean selfChange = (entry.observer.asBinder() == observerBinder);
                 if (selfChange && !observerWantsSelfNotifications) {
+                    //代表是触发者，但是它不想要这个通知，
                     continue;
                 }
 
@@ -1142,6 +1155,7 @@ public final class ContentService extends IContentService.Stub {
                         || targetUserHandle == entry.userHandle) {
                     // Make sure the observer is interested in the notification
                     if (leaf || (!leaf && entry.notifyForDescendants)) {
+                        //notifyForDescendants表示对于子结点的数据变化感兴趣。
                         calls.add(new ObserverCall(this, entry.observer, selfChange));
                     }
                 }
@@ -1157,10 +1171,12 @@ public final class ContentService extends IContentService.Stub {
             String segment = null;
             int segmentCount = countUriSegments(uri);
             if (index >= segmentCount) {
+                //叶子结点，
                 // This is the leaf node, notify all observers
                 collectMyObserversLocked(true, observer, observerWantsSelfNotifications,
                         targetUserHandle, calls);
             } else if (index < segmentCount){
+                //在当前结点收集是否有observer对子结点数据发生变化感兴趣，如果有，那么应该通知他们，
                 segment = getUriSegment(uri, index);
                 // Notify any observers at this level who are interested in descendants
                 collectMyObserversLocked(false, observer, observerWantsSelfNotifications,
@@ -1171,6 +1187,7 @@ public final class ContentService extends IContentService.Stub {
             for (int i = 0; i < N; i++) {
                 ObserverNode node = mChildren.get(i);
                 if (segment == null || node.mName.equals(segment)) {
+                    //从子结点里面继续寻找，，，
                     // We found the child,
                     node.collectObserversLocked(uri, index + 1,
                             observer, observerWantsSelfNotifications, targetUserHandle, calls);

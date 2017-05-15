@@ -52,7 +52,7 @@ import android.widget.AdapterView;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
-
+//用来保存Fragment的状态信息
 final class FragmentState implements Parcelable {
     final String mClassName;
     final int mIndex;
@@ -92,7 +92,8 @@ final class FragmentState implements Parcelable {
         mArguments = in.readBundle();
         mSavedFragmentState = in.readBundle();
     }
-
+    //从FragmentState里面重建Fragment，有一种fragment不需要重建，这种fragment的mRetainInstance是true，
+    //这个函数里面不会恢复对应fragment的程序状态和view的状态，
     public Fragment instantiate(FragmentHostCallback host, Fragment parent) {
         if (mInstance != null) {
             return mInstance;
@@ -436,6 +437,7 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
     // The optional identifier for this fragment -- either the container ID if it
     // was dynamically added to the view hierarchy, or the ID supplied in
     // layout.
+    //动态添加的时候是containerId,静态添加的时候是布局文件里面的id,
     int mFragmentId;
 
     // When a fragment is being dynamically added to the view hierarchy, this
@@ -444,6 +446,7 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
 
     // The optional named tag for this fragment -- usually used to find
     // fragments that are not part of the layout.
+    //tag标签，，，
     String mTag;
 
     // Set to true when the app has requested that this fragment be hidden
@@ -584,7 +587,7 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
         return instantiate(context, fname, null);
     }
 
-    /**
+    /**创建fragment的实例
      * Create a new instance of a Fragment with the given class name.  This is
      * the same as calling its empty constructor.
      *
