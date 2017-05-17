@@ -262,7 +262,7 @@ public class Loader<D> {
         return mReset;
     }
 
-    /**
+    /**开始异步加载，需要在ui线程调用，更新内部状态，
      * This function will normally be called for you automatically by
      * {@link android.app.LoaderManager} when the associated fragment/activity
      * is being started.  When using a Loader with {@link android.app.LoaderManager},

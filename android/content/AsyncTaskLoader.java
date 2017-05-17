@@ -193,6 +193,7 @@ public abstract class AsyncTaskLoader<D> extends Loader<D> {
                 boolean cancelled = mTask.cancel(false);
                 if (DEBUG) Log.v(TAG, "cancelLoad: cancelled=" + cancelled);
                 if (cancelled) {
+                    //取消正在执行的task
                     mCancellingTask = mTask;
                     cancelLoadInBackground();
                 }

@@ -42,9 +42,10 @@ public abstract class FragmentHostCallback<E> extends FragmentContainer {
     private final Handler mHandler;
     final int mWindowAnimations;
     final FragmentManagerImpl mFragmentManager = new FragmentManagerImpl();
-    private ArrayMap<String, LoaderManager> mAllLoaderManagers;
-    private LoaderManagerImpl mLoaderManager;
+    private ArrayMap<String, LoaderManager> mAllLoaderManagers;//除了保存对应activity的loadManager之外，还保存了这个activity的fragment对应的loadManager
+    private LoaderManagerImpl mLoaderManager;//对应activity的loaderManager
     private boolean mCheckedForLoaderManager;
+    //标记是否启动了个loaderManager
     private boolean mLoadersStarted;
 
     public FragmentHostCallback(Context context, Handler handler, int windowAnimations) {
@@ -201,7 +202,8 @@ public abstract class FragmentHostCallback<E> extends FragmentContainer {
             }
         }
     }
-
+    //对应activity的onStart，在这个时候启动各个loader
+    //注意这个地方只启动了对应activity的loaderManager，
     void doLoaderStart() {
         if (mLoadersStarted) {
             return;
@@ -209,8 +211,10 @@ public abstract class FragmentHostCallback<E> extends FragmentContainer {
         mLoadersStarted = true;
 
         if (mLoaderManager != null) {
+            //如果之前已经有了，那么直接启动它，因为现在已经到了activity的start状态
             mLoaderManager.doStart();
         } else if (!mCheckedForLoaderManager) {
+            //如果之前没有创建，那么创建loaderManager，并且启动它
             mLoaderManager = getLoaderManager("(root)", mLoadersStarted, false);
         }
         mCheckedForLoaderManager = true;
@@ -227,6 +231,7 @@ public abstract class FragmentHostCallback<E> extends FragmentContainer {
         mLoadersStarted = false;
 
         if (retain) {
+            //是保存状态还是停止，
             mLoaderManager.doRetain();
         } else {
             mLoaderManager.doStop();
@@ -246,7 +251,7 @@ public abstract class FragmentHostCallback<E> extends FragmentContainer {
         }
         mLoaderManager.doDestroy();
     }
-
+    //告诉loaderManager，宿主已经准备好接收数据了，
     void reportLoaderStart() {
         if (mAllLoaderManagers != null) {
             final int N = mAllLoaderManagers.size();
@@ -256,7 +261,9 @@ public abstract class FragmentHostCallback<E> extends FragmentContainer {
             }
             for (int i=0; i<N; i++) {
                 LoaderManagerImpl lm = loaders[i];
+
                 lm.finishRetain();
+                //
                 lm.doReportStart();
             }
         }

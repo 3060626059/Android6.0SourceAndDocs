@@ -350,7 +350,7 @@ public class FragmentController {
         mHost.doLoaderDestroy();
     }
 
-    /**
+    /**通知loader,宿主已经准备好接收数据了
      * Lets the loaders know the host is ready to receive notifications.
      */
     public void reportLoaderStart() {

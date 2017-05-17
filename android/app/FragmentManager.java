@@ -447,8 +447,9 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
     ArrayList<Runnable> mPendingActions;
     Runnable[] mTmpActions;
     boolean mExecutingActions;
-    
+    //是mAdded的超集，
     ArrayList<Fragment> mActive;
+    //标记当前绑定到activity的fragment？？？
     ArrayList<Fragment> mAdded;
     //标记mActive哪个位置是null
     ArrayList<Integer> mAvailIndices;
@@ -651,7 +652,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
         bundle.putInt(key, fragment.mIndex);
     }
-
+    //key对应的值是fragment在mActive里面的下标
     @Override
     public Fragment getFragment(Bundle bundle, String key) {
         int index = bundle.getInt(key, -1);
@@ -905,6 +906,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                 f.mAnimatingAway = null;
                 moveToState(f, f.mStateAfterAnimating, 0, 0, true);
             }
+            //一句fragment之前的状态，进行分支处理，可以看到这些case没有break,
             switch (f.mState) {
                 case Fragment.INITIALIZING:
                     if (DEBUG) Log.v(TAG, "moveto CREATED: " + f);
@@ -920,6 +922,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                         f.mUserVisibleHint = f.mSavedFragmentState.getBoolean(
                                 FragmentManagerImpl.USER_VISIBLE_HINT_TAG, true);
                         if (!f.mUserVisibleHint) {
+                            //延迟启动这个，fragment，主要是用在恢复数据的场景
                             f.mDeferStart = true;
                             if (newState > Fragment.STOPPED) {
                                 newState = Fragment.STOPPED;
@@ -931,28 +934,37 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                     f.mFragmentManager = mParent != null
                             ? mParent.mChildFragmentManager : mHost.getFragmentManagerImpl();
                     f.mCalled = false;
+                    //调用fragment的onAttach函数，
                     f.onAttach(mHost.getContext());
                     if (!f.mCalled) {
                         throw new SuperNotCalledException("Fragment " + f
                                 + " did not call through to super.onAttach()");
                     }
+                    //这个fragment是直接附加到activity的，而不是附加到其他fragment的
                     if (f.mParentFragment == null) {
                         mHost.onAttachFragment(f);
                     }
 
                     if (!f.mRetaining) {
+                        //如果这个fragment不需要跟着activity的重建而重建，那么就不需要走这个create过程，
+                        //
                         f.performCreate(f.mSavedFragmentState);
                     }
+                    //取消标记正在经历activity的重建，
                     f.mRetaining = false;
                     if (f.mFromLayout) {
+                        //是从布局文件里面添加的，需要立刻创建view,
                         // For fragments that are part of the content view
                         // layout, we need to instantiate the view immediately
                         // and the inflater will take care of adding it.
+                        //inflater会把fragment的view添加到activity的view树
+                        //间接调用onCreateView
                         f.mView = f.performCreateView(f.getLayoutInflater(
                                 f.mSavedFragmentState), null, f.mSavedFragmentState);
                         if (f.mView != null) {
                             f.mView.setSaveFromParentEnabled(false);
                             if (f.mHidden) f.mView.setVisibility(View.GONE);
+                            //调用onViewCreated,
                             f.onViewCreated(f.mView, f.mSavedFragmentState);
                         }
                     }
@@ -960,6 +972,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                     if (newState > Fragment.CREATED) {
                         if (DEBUG) Log.v(TAG, "moveto ACTIVITY_CREATED: " + f);
                         if (!f.mFromLayout) {
+                            //动态添加的，而不是从布局文件里面添加的，
                             ViewGroup container = null;
                             if (f.mContainerId != 0) {
                                 container = (ViewGroup)mContainer.onFindViewById(f.mContainerId);
@@ -984,15 +997,17 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                                         setHWLayerAnimListenerIfAlpha(f.mView, anim);
                                         anim.start();
                                     }
+                                    //将fragment的view添加到activity，
                                     container.addView(f.mView);
                                 }
                                 if (f.mHidden) f.mView.setVisibility(View.GONE);
                                 f.onViewCreated(f.mView, f.mSavedFragmentState);
                             }
                         }
-
+                        //间接调用onActivityCreated
                         f.performActivityCreated(f.mSavedFragmentState);
                         if (f.mView != null) {
+                            //恢复view的状态，
                             f.restoreViewState(f.mSavedFragmentState);
                         }
                         f.mSavedFragmentState = null;
@@ -1014,29 +1029,35 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                     }
             }
         } else if (f.mState > newState) {
+            //一句fragment之前的状态进行处理，反向处理，
             switch (f.mState) {
                 case Fragment.RESUMED:
                     if (newState < Fragment.RESUMED) {
+                        //从onResume状态退回来，
                         if (DEBUG) Log.v(TAG, "movefrom RESUMED: " + f);
                         f.performPause();
                         f.mResumed = false;
                     }
                 case Fragment.STARTED:
                     if (newState < Fragment.STARTED) {
+                        //从STARTED状态退回来，
                         if (DEBUG) Log.v(TAG, "movefrom STARTED: " + f);
                         f.performStop();
                     }
                 case Fragment.STOPPED:
                 case Fragment.ACTIVITY_CREATED:
                     if (newState < Fragment.ACTIVITY_CREATED) {
+                        //从ACTIVITY_CREATED状态退回来，
                         if (DEBUG) Log.v(TAG, "movefrom ACTIVITY_CREATED: " + f);
                         if (f.mView != null) {
                             // Need to save the current view state if not
                             // done already.
                             if (mHost.onShouldSaveFragmentState(f) && f.mSavedViewState == null) {
+                                //保存这个fragment的状态，
                                 saveFragmentViewState(f);
                             }
                         }
+                        //销毁view树，retaining类型的fragment一样需要销毁view树，
                         f.performDestroyView();
                         if (f.mView != null && f.mContainer != null) {
                             Animator anim = null;
@@ -1067,6 +1088,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                                 anim.start();
 
                             }
+                            //将fragment的view从父view里面移除，
                             f.mContainer.removeView(f.mView);
                         }
                         f.mContainer = null;
@@ -1097,6 +1119,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                         } else {
                             if (DEBUG) Log.v(TAG, "movefrom CREATED: " + f);
                             if (!f.mRetaining) {
+                                //如果不是Retaining类型的fragment，那么需要销毁，进行调用onDestroy
                                 f.performDestroy();
                             }
 
@@ -1108,6 +1131,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                             }
                             if (!keepActive) {
                                 if (!f.mRetaining) {
+                                    //如果不是Retaining类型的fragment，从mActive数组移除，
                                     makeInactive(f);
                                 } else {
                                     f.mHost = null;
@@ -1140,7 +1164,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         if (!always && mCurState == newState) {
             return;
         }
-
+        //修改fragmentManager的状态，只有这一个地方修改，
         mCurState = newState;
         if (mActive != null) {
             boolean loadersRunning = false;
@@ -1195,7 +1219,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
         if (DEBUG) Log.v(TAG, "Allocated fragment index " + f);
     }
-    //将指定的fragment移除出mActive数组，
+    //将指定的fragment移除出mActive数组，目前发现只有一个地方会调用，
     void makeInactive(Fragment f) {
         //说明已经不在mActive数组中，
         if (f.mIndex < 0) {
@@ -1203,6 +1227,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
         
         if (DEBUG) Log.v(TAG, "Freeing fragment index " + f);
+        //只有这个地方才会从mActive里面移除fragment，
         mActive.set(f.mIndex, null);
         if (mAvailIndices == null) {
             mAvailIndices = new ArrayList<Integer>();
@@ -1222,7 +1247,9 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             if (mAdded.contains(fragment)) {
                 throw new IllegalStateException("Fragment already added: " + fragment);
             }
+            //添加到mAdded数组中，
             mAdded.add(fragment);
+            //标记已经添加到activity，
             fragment.mAdded = true;
             fragment.mRemoving = false;
             if (fragment.mHasMenu && fragment.mMenuVisible) {
@@ -1234,7 +1261,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             }
         }
     }
-    
+    //移除fragment，
     public void removeFragment(Fragment fragment, int transition, int transitionStyle) {
         if (DEBUG) Log.v(TAG, "remove: " + fragment + " nesting=" + fragment.mBackStackNesting);
         final boolean inactive = !fragment.isInBackStack();
@@ -1248,15 +1275,20 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                     throw new IllegalStateException("Fragment not added: " + fragment);
                 }
             }
+            //从mAdded数组里面删除，
             if (mAdded != null) {
                 mAdded.remove(fragment);
             }
             if (fragment.mHasMenu && fragment.mMenuVisible) {
                 mNeedMenuInvalidate = true;
             }
+            //标记未添加到activity
             fragment.mAdded = false;
+
+            //标记mRemoving为true,
             fragment.mRemoving = true;
             //将指定的fragment推向指定的状态，不在后退栈的时候推向INITIALIZING，在后退栈的时候推向CREATED
+            //依据是否在回退栈将fragment推向不同的状态，
             moveToState(fragment, inactive ? Fragment.INITIALIZING : Fragment.CREATED,
                     transition, transitionStyle, false);
         }
@@ -1324,11 +1356,13 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                 // We are not already in back stack, so need to remove the fragment.
                 if (mAdded != null) {
                     if (DEBUG) Log.v(TAG, "remove from detach: " + fragment);
+                    //从mAdded数组中移除，
                     mAdded.remove(fragment);
                 }
                 if (fragment.mHasMenu && fragment.mMenuVisible) {
                     mNeedMenuInvalidate = true;
                 }
+                //标记未添加到activity,
                 fragment.mAdded = false;
                 moveToState(fragment, Fragment.CREATED, transition, transitionStyle, false);
             }
@@ -1347,7 +1381,9 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                     throw new IllegalStateException("Fragment already added: " + fragment);
                 }
                 if (DEBUG) Log.v(TAG, "add from attach: " + fragment);
+                //添加到mAdded数组中，
                 mAdded.add(fragment);
+                //标记添加到activity
                 fragment.mAdded = true;
                 if (fragment.mHasMenu && fragment.mMenuVisible) {
                     mNeedMenuInvalidate = true;
@@ -1445,6 +1481,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             mPendingActions.add(action);
             if (mPendingActions.size() == 1) {
                 mHost.getHandler().removeCallbacks(mExecCommit);
+                //发送一个runnable,这个runnable会去执行之前待定的runnable
                 mHost.getHandler().post(mExecCommit);
             }
         }
@@ -1456,6 +1493,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                 if (mBackStackIndices == null) {
                     mBackStackIndices = new ArrayList<BackStackRecord>();
                 }
+                //末尾添加，
                 int index = mBackStackIndices.size();
                 if (DEBUG) Log.v(TAG, "Setting back stack index " + index + " to " + bse);
                 mBackStackIndices.add(bse);
@@ -1506,7 +1544,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         }
     }
 
-    /**
+    /**执行待办的事项，
      * Only call from main thread!
      */
     public boolean execPendingActions() {
@@ -1522,7 +1560,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
 
         while (true) {
             int numActions;
-            
+            //这个地方是循环，因为其他地方有可能又添加了待办事项，
             synchronized (this) {
                 if (mPendingActions == null || mPendingActions.size() == 0) {
                     break;
@@ -1536,7 +1574,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                 mPendingActions.clear();
                 mHost.getHandler().removeCallbacks(mExecCommit);
             }
-            
+            //标记正在执行，这个函数必须在主线程里面做，
             mExecutingActions = true;
             for (int i=0; i<numActions; i++) {
                 mTmpActions[i].run();
@@ -1574,6 +1612,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
         if (mBackStack == null) {
             mBackStack = new ArrayList<BackStackRecord>();
         }
+        //也是末尾添加，
         mBackStack.add(state);
         reportBackStackChanged();
     }
@@ -1590,6 +1629,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
             final BackStackRecord bss = mBackStack.remove(last);
             SparseArray<Fragment> firstOutFragments = new SparseArray<Fragment>();
             SparseArray<Fragment> lastInFragments = new SparseArray<Fragment>();
+            //计算需要反向操作的fragment，
             bss.calculateBackFragments(firstOutFragments, lastInFragments);
             bss.popFromBackStack(true, null, firstOutFragments, lastInFragments);
             reportBackStackChanged();
@@ -1661,6 +1701,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                         fragments = new ArrayList<Fragment>();
                     }
                     fragments.add(f);
+                    //标记正在经历activity的重建过程，但是这个fragment不需要重建
                     f.mRetaining = true;
                     f.mTargetIndex = f.mTarget != null ? f.mTarget.mIndex : -1;
                     if (DEBUG) Log.v(TAG, "retainNonConfig: keeping retained " + f);
@@ -1919,6 +1960,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                     throwException(new IllegalStateException(
                             "No instantiated fragment for index #" + fms.mAdded[i]));
                 }
+                //标记已经添加到activity
                 f.mAdded = true;
                 if (DEBUG) Log.v(TAG, "restoreAllState: added #" + i + ": " + f);
                 if (mAdded.contains(f)) {
@@ -1965,12 +2007,12 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
     public void noteStateNotSaved() {
         mStateSaved = false;
     }
-    
+    //对应Activity的onCreate,这个时候mActive还没有数据，
     public void dispatchCreate() {
         mStateSaved = false;
         moveToState(Fragment.CREATED, false);
     }
-    
+    //对应Activity的onCreate已经执行完成，在onCreate后的某个时间点
     public void dispatchActivityCreated() {
         mStateSaved = false;
         moveToState(Fragment.ACTIVITY_CREATED, false);
@@ -2176,6 +2218,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
 
     @Override
     public View onCreateView(View parent, String name, Context context, AttributeSet attrs) {
+        //xml里面添加的fragment
         if (!"fragment".equals(name)) {
             return null;
         }
@@ -2213,6 +2256,7 @@ final class FragmentManagerImpl extends FragmentManager implements LayoutInflate
                 + " existing=" + fragment);
         if (fragment == null) {
             fragment = Fragment.instantiate(context, fname);
+            //标记从布局文件实例化的，
             fragment.mFromLayout = true;
             fragment.mFragmentId = id != 0 ? id : containerId;
             fragment.mContainerId = containerId;

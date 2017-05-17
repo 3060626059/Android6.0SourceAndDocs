@@ -681,7 +681,7 @@ final class BackStackRecord extends FragmentTransaction implements
             pw.flush();
         }
         mCommitted = true;
-        //这个事务是否添加到回退栈，，，
+        //这个事务是否添加到回退栈，，，如果不添加的话，这个BackStackRecord是不会被保存很久的，一旦执行完run方法，就没有再被引用了，
         if (mAddToBackStack) {
             mIndex = mManager.allocBackStackIndex(this);
         } else {
@@ -796,6 +796,7 @@ final class BackStackRecord extends FragmentTransaction implements
 
             op = op.next;
         }
+        //双向链表信息并没有被清除
         //将这次事务的fragment推向正确的状态，
         mManager.moveToState(mManager.mCurState, mTransition,
                 mTransitionStyle, true);
@@ -808,6 +809,7 @@ final class BackStackRecord extends FragmentTransaction implements
     private static void setFirstOut(SparseArray<Fragment> fragments, Fragment fragment) {
         if (fragment != null) {
             int containerId = fragment.mContainerId;
+            //需要有view，
             if (containerId != 0 && !fragment.isHidden() && fragment.isAdded() &&
                     fragment.getView() != null && fragments.get(containerId) == null) {
                 fragments.put(containerId, fragment);
@@ -824,7 +826,7 @@ final class BackStackRecord extends FragmentTransaction implements
         }
     }
 
-    /**
+    /**针对这个事务，计算需要操作的fragment，
      * Finds the first removed fragment and last added fragments when going forward.
      * If none of the fragments have transitions, then both lists will be empty.
      *
@@ -882,7 +884,7 @@ final class BackStackRecord extends FragmentTransaction implements
         }
     }
 
-    /**
+    /**针对这个事务，反向计算需要恢复和移除的fragment，
      * Finds the first removed fragment and last added fragments when popping the back stack.
      * If none of the fragments have transitions, then both lists will be empty.
      *
@@ -1602,11 +1604,12 @@ final class BackStackRecord extends FragmentTransaction implements
         }
 
         bumpBackStackNesting(-1);
-
+        //双向链表，现在从尾部到头部，
         Op op = mTail;
         while (op != null) {
             switch (op.cmd) {
                 case OP_ADD: {
+                    //之前是添加，现在要变成删除，，，
                     Fragment f = op.fragment;
                     f.mNextAnim = op.popExitAnim;
                     mManager.removeFragment(f,

@@ -61,7 +61,7 @@ final class FragmentState implements Parcelable {
     final int mContainerId;
     final String mTag;
     final boolean mRetainInstance;
-    final boolean mDetached;
+    final boolean mDetached;//对应attach和detach操作，
     final Bundle mArguments;
 
     Bundle mSavedFragmentState;
@@ -400,24 +400,29 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
     int mTargetRequestCode;
 
     // True if the fragment is in the list of added fragments.
+    //标记当前fragment是否在FragmentManager的mAdded数组里面，下面还有方法说当前是否已经添加到activity里面，
     boolean mAdded;
 
     // If set this fragment is being removed from its activity.
+    //标记正在从activity移除，对应FragmentManager的addFragment和removeFragment
     boolean mRemoving;
 
     // True if the fragment is in the resumed state.
     boolean mResumed;
 
     // Set to true if this fragment was instantiated from a layout file.
+    //从布局文件实例化的，
     boolean mFromLayout;
 
     // Set to true when the view has actually been inflated in its layout.
+    //view是否已经展开了，
     boolean mInLayout;
 
     // True if this fragment has been restored from previously saved state.
     boolean mRestored;
 
     // Number of active back stack entries this fragment is in.
+    //大于0表示在后退栈里面，
     int mBackStackNesting;
 
     // The fragment manager we are associated with.  Set as soon as the
@@ -454,13 +459,16 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
     boolean mHidden;
 
     // Set to true when the app has requested that this fragment be detached.
+    //对应attach和detach操作，
     boolean mDetached;
 
     // If set this fragment would like its instance retained across
     // configuration changes.
+    //这个fragment不需要跟着activity的重建而重建，但是随着activity的重建，这种fragment的view树还是会需要重建的，所以准确的说这种也需要部分重建
     boolean mRetainInstance;
 
     // If set this fragment is being retained across the current config change.
+
     boolean mRetaining;
 
     // If set this fragment has menu items to contribute.
@@ -901,7 +909,7 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
         return mDetached;
     }
 
-    /**
+    /**并不代表activity正在销毁，而是代表这个fragment正在从activity里面移除
      * Return true if this fragment is currently being removed from its
      * activity.  This is  <em>not</em> whether its activity is finishing, but
      * rather whether it is in the process of being removed from its activity.
@@ -1371,7 +1379,7 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
         mCalled = true;
     }
 
-    /**
+    /**比onCreate先被调用
      * Called when a fragment is first attached to its context.
      * {@link #onCreate(Bundle)} will be called after this.
      */
@@ -2192,7 +2200,7 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
             }
         }, this);
     }
-
+    //调用fragment的onCreate函数，并且恢复孩子的fragmentManager的状态，
     void performCreate(Bundle savedInstanceState) {
         if (mChildFragmentManager != null) {
             mChildFragmentManager.noteStateNotSaved();
@@ -2206,15 +2214,18 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
         if (savedInstanceState != null) {
             Parcelable p = savedInstanceState.getParcelable(Activity.FRAGMENTS_TAG);
             if (p != null) {
+                //如果是恢复数据的话，一般就是在这个地方创建的，
                 if (mChildFragmentManager == null) {
                     instantiateChildFragmentManager();
                 }
+                //恢复孩子fragment的状态，第二个参数这个地方直接传的是null,所以嵌套的fragment不支持retaining类型的fragment
                 mChildFragmentManager.restoreAllState(p, null);
+                //分发孩子fragment的状态，
                 mChildFragmentManager.dispatchCreate();
             }
         }
     }
-
+    //间接调用onCreateView,
     View performCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
         if (mChildFragmentManager != null) {
@@ -2222,7 +2233,7 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
         }
         return onCreateView(inflater, container, savedInstanceState);
     }
-
+    //间接调用onActivityCreated
     void performActivityCreated(Bundle savedInstanceState) {
         if (mChildFragmentManager != null) {
             mChildFragmentManager.noteStateNotSaved();
@@ -2367,6 +2378,7 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
     void performSaveInstanceState(Bundle outState) {
         onSaveInstanceState(outState);
         if (mChildFragmentManager != null) {
+            //保存这个子fragmentManager的的各种状态，
             Parcelable p = mChildFragmentManager.saveAllState();
             if (p != null) {
                 outState.putParcelable(Activity.FRAGMENTS_TAG, p);

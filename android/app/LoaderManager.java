@@ -214,23 +214,23 @@ class LoaderManagerImpl extends LoaderManager {
 
     final String mWho;
 
-    boolean mStarted;
+    boolean mStarted;//标记宿主是否已经启动，
     boolean mRetaining;
     boolean mRetainingStarted;
     
-    boolean mCreatingLoader;
+    boolean mCreatingLoader;//标记是否正在创建loader,
     private FragmentHostCallback mHost;
-
+    //一个loader用一个LoaderInfo来表述，
     final class LoaderInfo implements Loader.OnLoadCompleteListener<Object>,
             Loader.OnLoadCanceledListener<Object> {
-        final int mId;
-        final Bundle mArgs;
-        LoaderManager.LoaderCallbacks<Object> mCallbacks;
-        Loader<Object> mLoader;
-        boolean mHaveData;
-        boolean mDeliveredData;
-        Object mData;
-        boolean mStarted;
+        final int mId;//标识loader
+        final Bundle mArgs;//传给loader的参数，
+        LoaderManager.LoaderCallbacks<Object> mCallbacks;//回调
+        Loader<Object> mLoader;//关联的loader
+        boolean mHaveData;//是否已经产生了数据
+        boolean mDeliveredData;//是否已经传递了数据
+        Object mData;//数据
+        boolean mStarted;//标记调用了start方法，启动了loader
         boolean mRetaining;
         boolean mRetainingStarted;
         boolean mReportNextStart;
@@ -263,6 +263,7 @@ class LoaderManagerImpl extends LoaderManager {
             
             if (DEBUG) Log.v(TAG, "  Starting: " + this);
             if (mLoader == null && mCallbacks != null) {
+                //如果还没创建loader的话，现在创建，
                mLoader = mCallbacks.onCreateLoader(mId, mArgs);
             }
             if (mLoader != null) {
@@ -273,14 +274,16 @@ class LoaderManagerImpl extends LoaderManager {
                             + mLoader);
                 }
                 if (!mListenerRegistered) {
+                    //注册完成和取消回调，
                     mLoader.registerListener(mId, this);
                     mLoader.registerOnLoadCanceledListener(this);
                     mListenerRegistered = true;
                 }
+                //开始加载，
                 mLoader.startLoading();
             }
         }
-        
+        //只是更新了一下状态，
         void retain() {
             if (DEBUG) Log.v(TAG, "  Retaining: " + this);
             mRetaining = true;
@@ -313,7 +316,7 @@ class LoaderManagerImpl extends LoaderManager {
                 callOnLoadFinished(mLoader, mData);
             }
         }
-        
+        //已经准备好开始接收数据，或者说现在可以发送数据了，
         void reportStart() {
             if (mStarted) {
                 if (mReportNextStart) {
@@ -324,7 +327,7 @@ class LoaderManagerImpl extends LoaderManager {
                 }
             }
         }
-
+        //停止加载，
         void stop() {
             if (DEBUG) Log.v(TAG, "  Stopping: " + this);
             mStarted = false;
@@ -347,7 +350,7 @@ class LoaderManagerImpl extends LoaderManager {
                 }
             }
         }
-
+        //销毁，
         void destroy() {
             if (DEBUG) Log.v(TAG, "  Destroying: " + this);
             mDestroyed = true;
@@ -570,7 +573,7 @@ class LoaderManagerImpl extends LoaderManager {
         }
     }
     
-    /**
+    /**创建或者重用loader
      * Call to initialize a particular ID with a Loader.  If this ID already
      * has a Loader associated with it, it is left unchanged and any previous
      * callbacks replaced with the newly provided ones.  If there is not currently
@@ -609,6 +612,7 @@ class LoaderManagerImpl extends LoaderManager {
             info = createAndInstallLoader(id, args,  (LoaderManager.LoaderCallbacks<Object>)callback);
             if (DEBUG) Log.v(TAG, "  Created new loader " + info);
         } else {
+            //重用已经存在的loader，只更新了回调，并没有更新参数，
             if (DEBUG) Log.v(TAG, "  Re-using existing loader " + info);
             info.mCallbacks = (LoaderManager.LoaderCallbacks<Object>)callback;
         }
@@ -722,12 +726,14 @@ class LoaderManagerImpl extends LoaderManager {
         if (idx >= 0) {
             LoaderInfo info = mLoaders.valueAt(idx);
             mLoaders.removeAt(idx);
+            //调用destroy,
             info.destroy();
         }
         idx = mInactiveLoaders.indexOfKey(id);
         if (idx >= 0) {
             LoaderInfo info = mInactiveLoaders.valueAt(idx);
             mInactiveLoaders.removeAt(idx);
+            //调用destroy方法
             info.destroy();
         }
         if (mHost != null && !hasRunningLoaders()) {
@@ -754,7 +760,7 @@ class LoaderManagerImpl extends LoaderManager {
         }
         return null;
     }
- 
+    //启动loader
     void doStart() {
         if (DEBUG) Log.v(TAG, "Starting in " + this);
         if (mStarted) {
@@ -772,7 +778,7 @@ class LoaderManagerImpl extends LoaderManager {
             mLoaders.valueAt(i).start();
         }
     }
-    
+    //停止loader
     void doStop() {
         if (DEBUG) Log.v(TAG, "Stopping in " + this);
         if (!mStarted) {
@@ -820,13 +826,13 @@ class LoaderManagerImpl extends LoaderManager {
             mLoaders.valueAt(i).mReportNextStart = true;
         }
     }
-
+    //通知可以发送数据了，
     void doReportStart() {
         for (int i = mLoaders.size()-1; i >= 0; i--) {
             mLoaders.valueAt(i).reportStart();
         }
     }
-
+    //销毁，
     void doDestroy() {
         if (!mRetaining) {
             if (DEBUG) Log.v(TAG, "Destroying Active in " + this);

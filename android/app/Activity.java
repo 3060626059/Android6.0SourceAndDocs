@@ -900,6 +900,7 @@ public class Activity extends ContextThemeWrapper
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         if (DEBUG_LIFECYCLE) Slog.v(TAG, "onCreate " + this + ": " + savedInstanceState);
         if (mLastNonConfigurationInstances != null) {
+            //恢复loader
             mFragments.restoreLoaderNonConfig(mLastNonConfigurationInstances.loaders);
         }
         if (mActivityInfo.parentActivityName != null) {
@@ -911,6 +912,7 @@ public class Activity extends ContextThemeWrapper
         }
         if (savedInstanceState != null) {
             Parcelable p = savedInstanceState.getParcelable(FRAGMENTS_TAG);
+            //恢复fragment
             mFragments.restoreAllState(p, mLastNonConfigurationInstances != null
                     ? mLastNonConfigurationInstances.fragments : null);
         }
@@ -1917,7 +1919,7 @@ public class Activity extends ContextThemeWrapper
         return mFragments.getFragmentManager();
     }
 
-    /**
+    /**在fragment的onAttach和fragment的onCreate之间被调用，告诉activity哪个fragment被附加了，，，
      * Called when a Fragment is being attached to this activity, immediately
      * after the call to its {@link Fragment#onAttach Fragment.onAttach()}
      * method and before {@link Fragment#onCreate Fragment.onCreate()}.
