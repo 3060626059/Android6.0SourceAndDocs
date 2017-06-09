@@ -29,7 +29,7 @@ import java.util.List;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-/**
+/**对应一个摄像头，
  * <p>The CameraDevice class is a representation of a single camera connected to an
  * Android device, allowing for fine-grain control of image capture and
  * post-processing at high frame rates.</p>
@@ -54,7 +54,8 @@ import java.lang.annotation.RetentionPolicy;
  */
 public abstract class CameraDevice implements AutoCloseable {
 
-    /**
+    /**预览的请求模板，帧率优先高质量，所有设备可用，，对应于CameraCaptureSession.setRepeatingRequest
+     * 这就是说不同目标构造出来的请求，可能需要不同的方法来执行，甚至多个方法配合，
      * Create a request suitable for a camera preview window. Specifically, this
      * means that high frame rate is given priority over the highest-quality
      * post-processing. These requests would normally be used with the
@@ -65,7 +66,7 @@ public abstract class CameraDevice implements AutoCloseable {
      */
     public static final int TEMPLATE_PREVIEW = 1;
 
-    /**
+    /**拍照（静态图像捕捉）的请求模板，高质量优先帧率，所有设备可用，，对应于CameraCaptureSession.capture
      * Create a request suitable for still image capture. Specifically, this
      * means prioritizing image quality over frame rate. These requests would
      * commonly be used with the {@link CameraCaptureSession#capture} method.
@@ -75,7 +76,7 @@ public abstract class CameraDevice implements AutoCloseable {
      */
     public static final int TEMPLATE_STILL_CAPTURE = 2;
 
-    /**
+    /**录像的请求模板，使用稳定的帧率，所有设备可用，，对应于CameraCaptureSession.setRepeatingRequest
      * Create a request suitable for video recording. Specifically, this means
      * that a stable frame rate is used, and post-processing is set for
      * recording quality. These requests would commonly be used with the
@@ -86,7 +87,7 @@ public abstract class CameraDevice implements AutoCloseable {
      */
     public static final int TEMPLATE_RECORD  = 3;
 
-    /**
+    /**录像的过程中拍照，无需最大化图像质量，
      * Create a request suitable for still image capture while recording
      * video. Specifically, this means maximizing image quality without
      * disrupting the ongoing recording. These requests would commonly be used
@@ -748,7 +749,7 @@ public abstract class CameraDevice implements AutoCloseable {
     @Override
     public abstract void close();
 
-    /**
+    /**接收摄像头的状态更新，
      * A callback objects for receiving updates about the state of a camera device.
      *
      * <p>A callback instance must be provided to the {@link CameraManager#openCamera} method to

@@ -24,7 +24,7 @@ import android.view.Surface;
 import java.util.List;
 
 
-/**
+/**一个摄像头一次只有一个会话，打开一个新的会话，之前的会话就会被关闭，
  * A configured capture session for a {@link CameraDevice}, used for capturing images from the
  * camera or reprocessing images captured from the camera in the same session previously.
  *
@@ -177,18 +177,22 @@ public abstract class CameraCaptureSession implements AutoCloseable {
      */
     public abstract void tearDown(@NonNull Surface surface) throws CameraAccessException;
 
-    /**
+    /**提交捕捉图片的请求，
      * <p>Submit a request for an image to be captured by the camera device.</p>
      *
      * <p>The request defines all the parameters for capturing the single image,
      * including sensor, lens, flash, and post-processing settings.</p>
      *
+     *
+     * 每个请求产生新的视频帧，每个请求里面的surface必须是构造CameraCaptureSession的时候surface集合的子集，
      * <p>Each request will produce one {@link CaptureResult} and produce new frames for one or more
      * target Surfaces, set with the CaptureRequest builder's
      * {@link CaptureRequest.Builder#addTarget} method. The target surfaces (set with
      * {@link CaptureRequest.Builder#addTarget}) must be a subset of the surfaces provided when this
      * capture session was created.</p>
      *
+     *
+     * 一次可以处理多个请求，先进先出的顺序进行处理，不同请求还有不同的优先级，
      * <p>Multiple regular and reprocess requests can be in progress at once. If there are only
      * regular requests or reprocess requests in progress, they are processed in first-in,
      * first-out order. If there are both regular and reprocess requests in progress, regular
@@ -310,9 +314,10 @@ public abstract class CameraCaptureSession implements AutoCloseable {
             @Nullable CaptureCallback listener, @Nullable Handler handler)
             throws CameraAccessException;
 
-    /**
+    /**请求无限重复捕捉图像，
      * Request endlessly repeating capture of images by this capture session.
      *
+     * 持续捕捉图像，
      * <p>With this method, the camera device will continually capture images
      * using the settings in the provided {@link CaptureRequest}, at the maximum
      * rate possible.</p>
@@ -321,6 +326,8 @@ public abstract class CameraCaptureSession implements AutoCloseable {
      * preview or other continuous stream of frames, without having to
      * continually submit identical requests through {@link #capture}.</p>
      *
+     *
+     * 重复请求的优先级比较低，
      * <p>Repeat requests have lower priority than those submitted
      * through {@link #capture} or {@link #captureBurst}, so if
      * {@link #capture} is called when a repeating request is active, the
@@ -449,7 +456,7 @@ public abstract class CameraCaptureSession implements AutoCloseable {
             @Nullable CaptureCallback listener, @Nullable Handler handler)
             throws CameraAccessException;
 
-    /**
+    /**取消重复捕捉请求，
      * <p>Cancel any ongoing repeating capture set by either
      * {@link #setRepeatingRequest setRepeatingRequest} or
      * {@link #setRepeatingBurst}. Has no effect on requests submitted through
@@ -472,7 +479,7 @@ public abstract class CameraCaptureSession implements AutoCloseable {
      */
     public abstract void stopRepeating() throws CameraAccessException;
 
-    /**
+    /**尽快丢弃所有待处理和正在处理的请求，
      * Discard all captures currently pending and in-progress as fast as possible.
      *
      * <p>The camera device will discard all of its current work as fast as possible. Some in-flight
@@ -539,7 +546,7 @@ public abstract class CameraCaptureSession implements AutoCloseable {
     @Nullable
     public abstract Surface getInputSurface();
 
-    /**
+    /**异步关闭会话，
      * Close this capture session asynchronously.
      *
      * <p>Closing a session frees up the target output Surfaces of the session for reuse with either

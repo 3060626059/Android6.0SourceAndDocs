@@ -24,8 +24,11 @@ import android.os.Looper;
 import android.os.Message;
 import android.view.Surface;
 
-/**
+/**捕获图像流的帧作为OpenGL ES纹理
  * Captures frames from an image stream as an OpenGL ES texture.
+ *可以从相机预览和视频解码得到图像流，
+ * Surface作为Camera2、MdediaCodec、MediaPlayer、Allocation的输出目的地，
+ *
  *
  * <p>The image stream may come from either camera preview or video decode. A
  * {@link android.view.Surface} created from a SurfaceTexture can be used as an output
@@ -35,11 +38,14 @@ import android.view.Surface;
  * when the SurfaceTexture was created are updated to contain the most recent image from the image
  * stream.  This may cause some frames of the stream to be skipped.
  *
+ *
+ *图像流的帧
  * <p>A SurfaceTexture may also be used in place of a SurfaceHolder when specifying the output
  * destination of the older {@link android.hardware.Camera} API. Doing so will cause all the
  * frames from the image stream to be sent to the SurfaceTexture object rather than to the device's
  * display.
  *
+ * 纹理采样的时候，需要转换纹理坐标，转换矩阵可能会变，
  * <p>When sampling from the texture one should first transform the texture coordinates using the
  * matrix queried via {@link #getTransformMatrix(float[])}.  The transform matrix may change each
  * time {@link #updateTexImage} is called, so it should be re-queried each time the texture image

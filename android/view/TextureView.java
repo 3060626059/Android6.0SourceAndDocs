@@ -774,22 +774,22 @@ public class TextureView extends View {
         }
     };
 
-    /**
+    /**当关联在这个TextureView的SurfaceTexture可用的时候，通知感兴趣者，
      * This listener can be used to be notified when the surface texture
      * associated with this texture view is available.
      */
     public static interface SurfaceTextureListener {
-        /**
+        /**surface有些地方也叫绘图表面，
          * Invoked when a {@link TextureView}'s SurfaceTexture is ready for use.
          *
          * @param surface The surface returned by
          *                {@link android.view.TextureView#getSurfaceTexture()}
-         * @param width The width of the surface
-         * @param height The height of the surface
+         * @param width The width of the surface surface的宽度
+         * @param height The height of the surface surface的高度
          */
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height);
 
-        /**
+        /**缓冲区大小改变了，
          * Invoked when the {@link SurfaceTexture}'s buffers size changed.
          *
          * @param surface The surface returned by
@@ -809,7 +809,7 @@ public class TextureView extends View {
          */
         public boolean onSurfaceTextureDestroyed(SurfaceTexture surface);
 
-        /**
+        /**surface被更新了，
          * Invoked when the specified {@link SurfaceTexture} is updated through
          * {@link SurfaceTexture#updateTexImage()}.
          *

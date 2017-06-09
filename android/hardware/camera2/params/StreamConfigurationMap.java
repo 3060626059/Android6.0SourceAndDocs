@@ -467,7 +467,7 @@ public final class StreamConfigurationMap {
                 HAL_DATASPACE_UNKNOWN,/*output*/true, /*highRes*/false);
     }
 
-    /**
+    /**返回兼容请求的图片格式的数组，
      * Get a list of sizes compatible with the requested image {@code format}.
      *
      * <p>The {@code format} should be a supported format (one of the formats returned by

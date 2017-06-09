@@ -598,7 +598,7 @@ public final class CameraManager {
         }
     }
 
-    /**
+    /**返回摄像头设备，
      * Return or create the list of currently connected camera devices.
      *
      * <p>In case of errors connecting to the camera service, will return an empty list.</p>

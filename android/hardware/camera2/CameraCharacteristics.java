@@ -169,7 +169,7 @@ public final class CameraCharacteristics extends CameraMetadata<CameraCharacteri
         return new CameraMetadataNative(mProperties);
     }
 
-    /**
+    /**获取摄像头一个特性值
      * Get a camera characteristics field value.
      *
      * <p>The field definitions can be
@@ -982,7 +982,7 @@ public final class CameraCharacteristics extends CameraMetadata<CameraCharacteri
     public static final Key<Integer> LENS_INFO_FOCUS_DISTANCE_CALIBRATION =
             new Key<Integer>("android.lens.info.focusDistanceCalibration", int.class);
 
-    /**
+    /**摄像头相对于屏幕的位置，这个属性所有设备都有，
      * <p>Direction the camera faces relative to
      * device screen.</p>
      * <p><b>Possible values:</b>

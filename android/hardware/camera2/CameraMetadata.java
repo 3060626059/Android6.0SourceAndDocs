@@ -300,19 +300,19 @@ public abstract class CameraMetadata<TKey> {
     // Enumeration values for CameraCharacteristics#LENS_FACING
     //
 
-    /**
+    /**前置摄像头
      * <p>The camera device faces the same direction as the device's screen.</p>
      * @see CameraCharacteristics#LENS_FACING
      */
     public static final int LENS_FACING_FRONT = 0;
 
-    /**
+    /**后置摄像头
      * <p>The camera device faces the opposite direction as the device's screen.</p>
      * @see CameraCharacteristics#LENS_FACING
      */
     public static final int LENS_FACING_BACK = 1;
 
-    /**
+    /**没有固定的相对位置
      * <p>The camera device is an external camera, and has no fixed facing relative to the
      * device's screen.</p>
      * @see CameraCharacteristics#LENS_FACING
@@ -1235,7 +1235,7 @@ public abstract class CameraMetadata<TKey> {
     // Enumeration values for CaptureRequest#CONTROL_AF_MODE
     //
 
-    /**
+    /**自动对焦程序不能控制镜头，
      * <p>The auto-focus routine does not control the lens;
      * {@link CaptureRequest#LENS_FOCUS_DISTANCE android.lens.focusDistance} is controlled by the
      * application.</p>

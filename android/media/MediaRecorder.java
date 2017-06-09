@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
 
-/**
+/**录制视频和音频，模拟器不能使用这个，函数的调用必须遵循一定的顺序，
  * Used to record audio and video. The recording control is based on a
  * simple state machine (see below).
  *
@@ -165,7 +165,7 @@ public class MediaRecorder
 
     private native final void native_setInputSurface(@NonNull Surface surface);
 
-    /**
+    /**设置一个surface，预览录制的视频
      * Sets a Surface to show a preview of recorded media (video). Calls this
      * before prepare() to make sure that the desirable preview display is
      * set. If {@link #setCamera(Camera)} is used and the surface has been
@@ -182,7 +182,7 @@ public class MediaRecorder
         mSurface = sv;
     }
 
-    /**
+    /**音频源
      * Defines the audio source.
      * An audio source defines both a default physical source of audio signal, and a recording
      * configuration. These constants are for instance used
@@ -273,7 +273,7 @@ public class MediaRecorder
         public static final int HOTWORD = 1999;
     }
 
-    /**
+    /**视频源
      * Defines the video source. These constants are used with
      * {@link MediaRecorder#setVideoSource(int)}.
      */
@@ -302,7 +302,7 @@ public class MediaRecorder
         public static final int SURFACE = 2;
     }
 
-    /**
+    /**输出格式
      * Defines the output format. These constants are used with
      * {@link MediaRecorder#setOutputFormat(int)}.
      */
@@ -347,7 +347,7 @@ public class MediaRecorder
         public static final int WEBM = 9;
     };
 
-    /**
+    /**音频编码器
      * Defines the audio encoding. These constants are used with
      * {@link MediaRecorder#setAudioEncoder(int)}.
      */
@@ -371,7 +371,7 @@ public class MediaRecorder
         public static final int VORBIS = 6;
     }
 
-    /**
+    /**视频编码器，
      * Defines the video encoding. These constants are used with
      * {@link MediaRecorder#setVideoEncoder(int)}.
      */
@@ -387,7 +387,7 @@ public class MediaRecorder
         public static final int VP8 = 4;
     }
 
-    /**
+    /**设置音频源，
      * Sets the audio source to be used for recording. If this method is not
      * called, the output file will not contain an audio track. The source needs
      * to be specified before setting recording-parameters or encoders. Call
@@ -408,7 +408,7 @@ public class MediaRecorder
         return AudioSource.REMOTE_SUBMIX;
     }
 
-    /**
+    /**设置视频源，
      * Sets the video source to be used for recording. If this method is not
      * called, the output file will not contain an video track. The source needs
      * to be specified before setting recording-parameters or encoders. Call
@@ -470,7 +470,7 @@ public class MediaRecorder
         setParameter("time-lapse-fps=" + fps);
     }
 
-    /**
+    /**设置方向提示，在视频录制期间不会触发原视频帧旋转，但是会添加一个组合矩阵到输出的视频里面，当然也只有部分格式支持，播放器也可能忽略这个，
      * Sets the orientation hint for output video playback.
      * This method should be called before prepare(). This method will not
      * trigger the source video frame to rotate during video recording, but to
@@ -495,7 +495,7 @@ public class MediaRecorder
         setParameter("video-param-rotation-angle-degrees=" + degrees);
     }
 
-    /**
+    /**设置地理数据，经纬度，只有部分输出文件格式支持
      * Set and store the geodata (latitude and longitude) in the output file.
      * This method should be called before prepare(). The geodata is
      * stored in udta box if the output format is OutputFormat.THREE_GPP
@@ -528,7 +528,7 @@ public class MediaRecorder
         setParameter("param-geotag-longitude=" + longitudex10000);
     }
 
-    /**
+    /**设置输出文件的格式，应该是容器包装格式，
      * Sets the format of the output file produced during recording. Call this
      * after setAudioSource()/setVideoSource() but before prepare().
      *
@@ -545,7 +545,7 @@ public class MediaRecorder
     public native void setOutputFormat(int output_format)
             throws IllegalStateException;
 
-    /**
+    /**设置视频宽高，
      * Sets the width and height of the video to be captured.  Must be called
      * after setVideoSource(). Call this after setOutFormat() but before
      * prepare().
@@ -558,7 +558,7 @@ public class MediaRecorder
     public native void setVideoSize(int width, int height)
             throws IllegalStateException;
 
-    /**
+    /**设置视频帧率，每秒多少帧
      * Sets the frame rate of the video to be captured.  Must be called
      * after setVideoSource(). Call this after setOutFormat() but before
      * prepare().
@@ -573,7 +573,7 @@ public class MediaRecorder
      */
     public native void setVideoFrameRate(int rate) throws IllegalStateException;
 
-    /**
+    /**设置最大持续时间，单位毫秒，
      * Sets the maximum duration (in ms) of the recording session.
      * Call this after setOutFormat() but before prepare().
      * After recording reaches the specified duration, a notification
@@ -588,7 +588,7 @@ public class MediaRecorder
      */
     public native void setMaxDuration(int max_duration_ms) throws IllegalArgumentException;
 
-    /**
+    /**设置最大的文件大小，单位字节，
      * Sets the maximum filesize (in bytes) of the recording session.
      * Call this after setOutFormat() but before prepare().
      * After recording reaches the specified filesize, a notification
@@ -603,7 +603,7 @@ public class MediaRecorder
      */
     public native void setMaxFileSize(long max_filesize_bytes) throws IllegalArgumentException;
 
-    /**
+    /**设置音频编码器，必须在某些方法之间调用才有效，
      * Sets the audio encoder to be used for recording. If this method is not
      * called, the output file will not contain an audio track. Call this after
      * setOutputFormat() but before prepare().
@@ -616,7 +616,7 @@ public class MediaRecorder
     public native void setAudioEncoder(int audio_encoder)
             throws IllegalStateException;
 
-    /**
+    /**设置视频编码器，必须在某些方法之间调用才有效，
      * Sets the video encoder to be used for recording. If this method is not
      * called, the output file will not contain an video track. Call this after
      * setOutputFormat() and before prepare().
@@ -629,7 +629,7 @@ public class MediaRecorder
     public native void setVideoEncoder(int video_encoder)
             throws IllegalStateException;
 
-    /**
+    /**设置音频采样比率，采样比率还依赖于音频录制的格式，不同音频编码标准支持的采样比率不一样
      * Sets the audio sampling rate for recording. Call this method before prepare().
      * Prepare() may perform additional checks on the parameter to make sure whether
      * the specified audio sampling rate is applicable. The sampling rate really depends
@@ -648,7 +648,7 @@ public class MediaRecorder
         setParameter("audio-param-sampling-rate=" + samplingRate);
     }
 
-    /**
+    /**设置音频通道数
      * Sets the number of audio channels for recording. Call this method before prepare().
      * Prepare() may perform additional checks on the parameter to make sure whether the
      * specified number of audio channels are applicable.
@@ -663,7 +663,7 @@ public class MediaRecorder
         setParameter("audio-param-number-of-channels=" + numChannels);
     }
 
-    /**
+    /**设置音频编码比率
      * Sets the audio encoding bit rate for recording. Call this method before prepare().
      * Prepare() may perform additional checks on the parameter to make sure whether the
      * specified bit rate is applicable, and sometimes the passed bitRate will be clipped
@@ -679,7 +679,7 @@ public class MediaRecorder
         setParameter("audio-param-encoding-bitrate=" + bitRate);
     }
 
-    /**
+    /**设置录制视频的时候编码比率，底层使用的可能是这个的近似值
      * Sets the video encoding bit rate for recording. Call this method before prepare().
      * Prepare() may perform additional checks on the parameter to make sure whether the
      * specified bit rate is applicable, and sometimes the passed bitRate will be
@@ -717,7 +717,7 @@ public class MediaRecorder
         Log.w(TAG, "setAuxiliaryOutputFile(String) is no longer supported.");
     }
 
-    /**
+    /**设置输出文件
      * Pass in the file descriptor of the file to be written. Call this after
      * setOutputFormat() but before prepare().
      *
@@ -750,7 +750,7 @@ public class MediaRecorder
         throws IllegalStateException, IOException;
     private native void _prepare() throws IllegalStateException, IOException;
 
-    /**
+    /**准备录制器开始捕捉和编码数据，在初始化数据之后（设置音频视频来源，设置编码器，文件格式等），start之前调用，
      * Prepares the recorder to begin capturing and encoding data. This method
      * must be called after setting up the desired audio and video sources,
      * encoders, file format, etc., but before start().
@@ -777,7 +777,7 @@ public class MediaRecorder
         _prepare();
     }
 
-    /**
+    /** 开始捕捉和编码数据到指定的输出文件
      * Begins capturing and encoding data to the file specified with
      * setOutputFile(). Call this after prepare().
      *
@@ -792,7 +792,7 @@ public class MediaRecorder
      */
     public native void start() throws IllegalStateException;
 
-    /**
+    /**停止之后就需要重新配置，调用停止方法的时候如果还没有收到合理的视频或者音频数据，那么会抛出异常
      * Stops recording. Call this after start(). Once recording is stopped,
      * you will have to configure it again as if it has just been constructed.
      * Note that a RuntimeException is intentionally thrown to the
@@ -806,7 +806,7 @@ public class MediaRecorder
      */
     public native void stop() throws IllegalStateException;
 
-    /**
+    /**重置之后也需要重新配置，，，
      * Restarts the MediaRecorder to its idle state. After calling
      * this method, you will have to configure it again as if it had just been
      * constructed.
@@ -820,7 +820,7 @@ public class MediaRecorder
 
     private native void native_reset();
 
-    /**
+    /**获取最大振幅，
      * Returns the maximum absolute amplitude that was sampled since the last
      * call to this method. Call this only after the setAudioSource().
      *
@@ -844,7 +844,7 @@ public class MediaRecorder
      */
     public static final int MEDIA_ERROR_SERVER_DIED = 100;
 
-    /**
+    /**录制过程中发生错误，
      * Interface definition for a callback to be invoked when an error
      * occurs while recording.
      */
@@ -891,7 +891,9 @@ public class MediaRecorder
      */
     public static final int MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED = 801;
 
-    /** informational events for individual tracks, for testing purpose.
+    /** 个别轨道的信息事件，用来测试的，onInfo的ext1参数包含轨道id和信息事件类型
+     *
+     * informational events for individual tracks, for testing purpose.
      * The track informational event usually contains two parts in the ext1
      * arg of the onInfo() callback: bit 31-28 contains the track id; and
      * the rest of the 28 bits contains the informational event defined here.
@@ -914,19 +916,19 @@ public class MediaRecorder
      * {@hide}
      */
     public static final int MEDIA_RECORDER_TRACK_INFO_COMPLETION_STATUS = 1000;
-    /** Indicate the recording progress in time (ms) during recording.
+    /** 标识录制的进程，单位毫秒 Indicate the recording progress in time (ms) during recording.
      * {@hide}
      */
     public static final int MEDIA_RECORDER_TRACK_INFO_PROGRESS_IN_TIME  = 1001;
-    /** Indicate the track type: 0 for Audio and 1 for Video.
+    /** 标识类型，0标识音频，1标识视频， Indicate the track type: 0 for Audio and 1 for Video.
      * {@hide}
      */
     public static final int MEDIA_RECORDER_TRACK_INFO_TYPE              = 1002;
-    /** Provide the track duration information.
+    /** 提供轨道持续时间信息， Provide the track duration information.
      * {@hide}
      */
     public static final int MEDIA_RECORDER_TRACK_INFO_DURATION_MS       = 1003;
-    /** Provide the max chunk duration in time (ms) for the given track.
+    /** 提供指定轨道的最大块持续时间  Provide the max chunk duration in time (ms) for the given track.
      * {@hide}
      */
     public static final int MEDIA_RECORDER_TRACK_INFO_MAX_CHUNK_DUR_MS  = 1004;
