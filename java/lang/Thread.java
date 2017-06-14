@@ -1114,7 +1114,7 @@ public class Thread implements Runnable {
      */
     public static native void yield();
 
-    /**
+    /**判断当前线程是否持有指定对象的监视器锁
      * Indicates whether the current Thread has a monitor lock on the specified
      * object.
      *

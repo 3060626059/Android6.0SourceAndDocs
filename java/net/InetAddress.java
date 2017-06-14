@@ -39,7 +39,7 @@ import libcore.io.Libcore;
 import libcore.io.Memory;
 import static android.system.OsConstants.*;
 
-/**
+/**IP地址
  * An Internet Protocol (IP) address. This can be either an IPv4 address or an IPv6 address, and
  * in practice you'll have an instance of either {@code Inet4Address} or {@code Inet6Address} (this
  * class cannot be instantiated directly). Most code does not need to distinguish between the two

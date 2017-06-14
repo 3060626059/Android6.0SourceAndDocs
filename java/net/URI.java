@@ -25,7 +25,7 @@ import java.util.Locale;
 import libcore.net.UriCodec;
 import libcore.net.url.UrlUtils;
 
-/**
+/**URI也是由多个部分组成的，这个类也支持双向操作，也就是说这个类支持解析URI,也支持通过部分构造URI
  * A Uniform Resource Identifier that identifies an abstract or physical
  * resource, as specified by <a href="http://www.ietf.org/rfc/rfc2396.txt">RFC
  * 2396</a>.
@@ -48,6 +48,8 @@ import libcore.net.url.UrlUtils;
  * <tr><td>{@link #getFragment() Fragment}                      </td><td>{@code fragment}                                                   </td><td>ref</td></tr>
  * </table>
  *
+ *
+ * 绝对URI和相对URI,绝对URI和相对URI可以相互转换，部分绝对URI可以转换成URL(需要这些协议是URL支持的协议)
  * <h3>Absolute vs. Relative URIs</h3>
  * URIs are either {@link #isAbsolute() absolute or relative}.
  * <ul>
@@ -97,6 +99,9 @@ import libcore.net.url.UrlUtils;
  * <p>Hierarchical URIs may have values for any URL component. They always
  * have a non-null path, though that path may be the empty string.
  *
+ *
+ *
+ * 不同的组成部分可以允许的字符集合不一样，有些组成部分需要encode
  * <h3>Encoding and Decoding URI Components</h3>
  * Each component of a URI permits a limited set of legal characters. Other
  * characters must first be <i>encoded</i> before they can be embedded in a URI.
@@ -117,6 +122,8 @@ import libcore.net.url.UrlUtils;
  * <tr><td>Query               </td><td>{@code 0-9}, {@code a-z}, {@code A-Z}, {@code _-!.~'()*,;:$&+=?/[]@}</td><td>Non-ASCII characters okay                          </td><td>{@code q=green%20robots}                                       </td><td>{@code q=green robots}</td></tr>
  * <tr><td>Fragment            </td><td>{@code 0-9}, {@code a-z}, {@code A-Z}, {@code _-!.~'()*,;:$&+=?/[]@}</td><td>Non-ASCII characters okay                          </td><td>{@code over%206%22}                                            </td><td>{@code over 6"}</td></tr>
  * </table>
+ *
+ * URI的主机、端口、协议这三个部分是没有资格进行编码的，不能包含非法字符。
  * A URI's host, port and scheme are not eligible for encoding and must not
  * contain illegal characters.
  *

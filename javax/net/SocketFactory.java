@@ -23,7 +23,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
-/**
+/**定义了创建socket的方法，
  * This abstract class defines methods to create sockets. It can be subclassed
  * to create specific socket types with additional socket-level functionality.
  */

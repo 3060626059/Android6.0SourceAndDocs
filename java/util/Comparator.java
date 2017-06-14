@@ -17,7 +17,7 @@
 
 package java.util;
 
-/**
+/**比较器，equals返回true的时候，compare应该返回0
  * A {@code Comparator} is used to compare two objects to determine their ordering with
  * respect to each other. On a given {@code Collection}, a {@code Comparator} can be used to
  * obtain a sorted {@code Collection} which is <i>totally ordered</i>. For a {@code Comparator}
@@ -29,7 +29,10 @@ package java.util;
  * @since 1.2
  */
 public interface Comparator<T> {
-    /**
+    /**第一个参数和第二个参数比较，
+     * 第一个参数小于第二个参数，返回负数
+     * 第一个参数等于第二个参数，返回0
+     * 第一个参数大于第二个参数，返回正数，
      * Compares the two specified objects to determine their relative ordering. The ordering
      * implied by the return value of this method for all possible pairs of
      * {@code (lhs, rhs)} should form an <i>equivalence relation</i>.

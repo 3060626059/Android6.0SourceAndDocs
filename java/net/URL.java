@@ -29,7 +29,13 @@ import libcore.net.url.FtpHandler;
 import libcore.net.url.JarHandler;
 import libcore.net.url.UrlUtils;
 
-/**
+/**可以用来解析或者构造特定的协议
+ *
+ * 协议，有些地方也叫scheme
+ *
+ *通过URL来发送http或https请求，底层已经改成了okhttp的实现，
+ *
+ *
  * A Uniform Resource Locator that identifies the location of an Internet
  * resource as specified by <a href="http://www.ietf.org/rfc/rfc1738.txt">RFC
  * 1738</a>.
@@ -52,6 +58,13 @@ import libcore.net.url.UrlUtils;
  * <tr><td>{@link #getRef() Ref}</td><td>{@code ref}</td><td>fragment</td></tr>
  * </table>
  *
+ *
+ * 支持的协议，如果是不支持的协议，那么会抛出异常，
+ * 1.file本地文件系统
+ * 2. ftp
+ * 3.http
+ * 4.https
+ * 5.本地系统的jar包
  * <h3>Supported Protocols</h3>
  * This class may be used to construct URLs with the following protocols:
  * <ul>
@@ -77,15 +90,16 @@ public final class URL implements Serializable {
 
     private static URLStreamHandlerFactory streamHandlerFactory;
 
-    /** Cache of protocols to their handlers */
+    /** 协议到流处理器的缓存，，Cache of protocols to their handlers */
     private static final Hashtable<String, URLStreamHandler> streamHandlers
             = new Hashtable<String, URLStreamHandler>();
-
+    //有些地方也叫scheme
     private String protocol;
     private String authority;
     private String host;
     private int port = -1;
     private String file;
+    //有些地方也叫fragment,,
     private String ref;
 
     private transient String userInfo;
@@ -115,7 +129,7 @@ public final class URL implements Serializable {
         streamHandlerFactory = factory;
     }
 
-    /**
+    /**使用绝对地址构建URL,调用三个参数的版本，
      * Creates a new URL instance by parsing {@code spec}.
      *
      * @throws MalformedURLException if {@code spec} could not be parsed as a
@@ -125,7 +139,7 @@ public final class URL implements Serializable {
         this((URL) null, spec, null);
     }
 
-    /**
+    /**使用相对地址构建
      * Creates a new URL by resolving {@code spec} relative to {@code context}.
      *
      * @param context the URL to which {@code spec} is relative, or null for
@@ -137,7 +151,7 @@ public final class URL implements Serializable {
         this(context, spec, null);
     }
 
-    /**
+    /**构建URL,参数spec可以相对参数context,
      * Creates a new URL by resolving {@code spec} relative to {@code context}.
      *
      * @param context the URL to which {@code spec} is relative, or null for
@@ -155,17 +169,19 @@ public final class URL implements Serializable {
             streamHandler = handler;
         }
         spec = spec.trim();
-
+        //获取协议，
         protocol = UrlUtils.getSchemePrefix(spec);
         int schemeSpecificPartStart = protocol != null ? (protocol.length() + 1) : 0;
 
         // If the context URL has a different protocol, discard it because we can't use it.
+        //俩个的协议不一样的处理，
         if (protocol != null && context != null && !protocol.equals(context.protocol)) {
             context = null;
         }
 
         // Inherit from the context URL if it exists.
         if (context != null) {
+            //从相对地址继承过来的东西，
             set(context.protocol, context.getHost(), context.getPort(), context.getAuthority(),
                     context.getUserInfo(), context.getPath(), context.getQuery(),
                     context.getRef());
@@ -370,7 +386,7 @@ public final class URL implements Serializable {
         return hashCode;
     }
 
-    /**
+    /**设置流处理器，
      * Sets the receiver's stream handler to one which is appropriate for its
      * protocol.
      *
@@ -390,6 +406,7 @@ public final class URL implements Serializable {
 
         // If there is a stream handler factory, then attempt to
         // use it to create the handler.
+        //流处理器工厂类，
         if (streamHandlerFactory != null) {
             streamHandler = streamHandlerFactory.createURLStreamHandler(protocol);
             if (streamHandler != null) {
@@ -400,6 +417,7 @@ public final class URL implements Serializable {
 
         // Check if there is a list of packages which can provide handlers.
         // If so, then walk this list looking for an applicable one.
+        //读取系统属性，，
         String packageList = System.getProperty("java.protocol.handler.pkgs");
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         if (packageList != null && contextClassLoader != null) {
@@ -418,7 +436,7 @@ public final class URL implements Serializable {
                 }
             }
         }
-
+        //系统内置的其他默认的协议处理器
         // Fall back to a built-in stream handler if the user didn't supply one
         if (protocol.equals("file")) {
             streamHandler = new FileHandler();
@@ -426,6 +444,7 @@ public final class URL implements Serializable {
             streamHandler = new FtpHandler();
         } else if (protocol.equals("http")) {
             try {
+                //http默认使用的是okhttp的协议处理器
                 String name = "com.android.okhttp.HttpHandler";
                 streamHandler = (URLStreamHandler) Class.forName(name).newInstance();
             } catch (Exception e) {
@@ -433,6 +452,7 @@ public final class URL implements Serializable {
             }
         } else if (protocol.equals("https")) {
             try {
+                //https默认使用的是okhttp的协议处理器
                 String name = "com.android.okhttp.HttpsHandler";
                 streamHandler = (URLStreamHandler) Class.forName(name).newInstance();
             } catch (Exception e) {
@@ -470,7 +490,7 @@ public final class URL implements Serializable {
         return openConnection().getInputStream();
     }
 
-    /**
+    /**不同的协议处理器返回来的URLConnection,
      * Returns a new connection to the resource referred to by this URL.
      *
      * @throws IOException if an error occurs while opening the connection.

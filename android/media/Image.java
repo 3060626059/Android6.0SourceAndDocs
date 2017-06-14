@@ -235,7 +235,7 @@ public abstract class Image implements AutoCloseable {
         mCropRect = cropRect;
     }
 
-    /**
+    /**返回图像的像素平面数组，
      * Get the array of pixel planes for this Image. The number of planes is
      * determined by the format of the Image. The application will get an empty
      * array if the image format is {@link android.graphics.ImageFormat#PRIVATE
@@ -319,7 +319,7 @@ public abstract class Image implements AutoCloseable {
         return 0;
     }
 
-    /**
+    /**图像数据的单色平面，
      * <p>A single color plane of image data.</p>
      *
      * <p>The number and meaning of the planes in an Image are determined by the
@@ -353,7 +353,7 @@ public abstract class Image implements AutoCloseable {
          * The pixel stride is always greater than 0.</p>
          */
         public abstract int getPixelStride();
-        /**
+        /**返回直接的包含帧数据的字节缓冲区
          * <p>Get a direct {@link java.nio.ByteBuffer ByteBuffer}
          * containing the frame data.</p>
          *

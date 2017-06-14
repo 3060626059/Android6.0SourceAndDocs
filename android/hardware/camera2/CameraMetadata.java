@@ -319,7 +319,7 @@ public abstract class CameraMetadata<TKey> {
      */
     public static final int LENS_FACING_EXTERNAL = 2;
 
-    //
+    //枚举值，描述相机的特性，
     // Enumeration values for CameraCharacteristics#REQUEST_AVAILABLE_CAPABILITIES
     //
 
@@ -2550,7 +2550,7 @@ public abstract class CameraMetadata<TKey> {
      */
     public static final int CONTROL_AF_STATE_FOCUSED_LOCKED = 4;
 
-    /**
+    /**自动对焦失败，但是锁定焦点了，
      * <p>AF has failed to focus successfully and has locked
      * focus.</p>
      * <p>This state is reached only after an explicit START AF trigger has been

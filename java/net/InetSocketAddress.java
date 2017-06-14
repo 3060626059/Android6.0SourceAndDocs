@@ -20,7 +20,7 @@ package java.net;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
-/**
+/**ip地址和端口号描述的套接字地址，
  * This class represents the address of a socket endpoint described by a IP address and a port
  * number. It is a concrete implementation of {@code SocketAddress} for IP.
  */
@@ -29,7 +29,7 @@ public class InetSocketAddress extends SocketAddress {
     private static final long serialVersionUID = 5076001401234631237L;
 
     // Exactly one of hostname or addr should be set.
-    private final InetAddress addr;
+    private final InetAddress addr;//ip地址，
     private final String hostname;
     private final int port;
 
