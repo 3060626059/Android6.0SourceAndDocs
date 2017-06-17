@@ -26,7 +26,7 @@ import java.security.Provider;
 import java.security.Security;
 import org.apache.harmony.security.fortress.Engine;
 
-/**
+/**基于密钥库的信任管理器或者基于提供商的具体实现，
  * The factory for {@code TrustManager}s based on {@code KeyStore} or provider
  * specific implementation.
  */
@@ -43,7 +43,7 @@ public class TrustManagerFactory {
     // Default value of TrustManagerFactory type.
     private static final String DEFAULT_PROPERTY = "PKIX";
 
-    /**
+    /**返回信任管理器的默认算法名，
      * Returns the default algorithm name for the {@code TrustManagerFactory}. The
      * default algorithm name is specified by the security property
      * {@code 'ssl.TrustManagerFactory.algorithm'}.
@@ -182,7 +182,7 @@ public class TrustManagerFactory {
         return provider;
     }
 
-    /**
+    /**用指定的密钥库初始化信任管理器，密钥库作为认证机构和信任材料的来源
      * Initializes this factory instance with the specified keystore as source
      * of certificate authorities and trust material.
      *
@@ -209,7 +209,7 @@ public class TrustManagerFactory {
         spiImpl.engineInit(spec);
     }
 
-    /**
+    /**返回信任管理器列表
      * Returns the list of {@code TrustManager}s with one entry for each type
      * of trust material.
      *

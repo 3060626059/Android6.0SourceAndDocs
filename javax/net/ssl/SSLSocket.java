@@ -861,7 +861,7 @@ public abstract class SSLSocket extends Socket {
      */
     public abstract String[] getEnabledCipherSuites();
 
-    /**
+    /**设置启动的加密套件
      * Sets the names of the cipher suites to be enabled.
      * Only cipher suites returned by {@link #getSupportedCipherSuites()} are
      * allowed.
@@ -873,17 +873,17 @@ public abstract class SSLSocket extends Socket {
      */
     public abstract void setEnabledCipherSuites(String[] suites);
 
-    /**
+    /**返回支持的协议列表，这个是静态的能力描述
      * Returns the names of the supported protocols.
      */
     public abstract String[] getSupportedProtocols();
 
-    /**
+    /**返回启用的协议列表，支持不一定启用，这个才是动态的
      * Returns the names of the enabled protocols.
      */
     public abstract String[] getEnabledProtocols();
 
-    /**
+    /**设置启动的协议
      * Sets the names of the protocols to be enabled. Only
      * protocols returned by {@link #getSupportedProtocols()} are allowed.
      *
@@ -923,7 +923,7 @@ public abstract class SSLSocket extends Socket {
      */
     public abstract void removeHandshakeCompletedListener(HandshakeCompletedListener listener);
 
-    /**
+    /**开始一个新的ssl握手
      * Starts a new SSL handshake on this connection.
      *
      * @throws IOException

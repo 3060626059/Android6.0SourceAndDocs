@@ -17,7 +17,7 @@
 
 package javax.net.ssl;
 
-/**
+/**JSSE信任管理器的标记接口，目的是用来分组信任管理器，信任管理器的任务就是处理信任数据，做出是否接受对端的证书的决策
  * The marker interface for JSSE trust managers. The purpose is to group trust
  * managers. The responsibility a trust manager is to handle the trust data used to
  * make trust decisions for deciding whether credentials of a peer should be

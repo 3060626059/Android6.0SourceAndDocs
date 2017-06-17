@@ -20,13 +20,15 @@ package javax.net.ssl;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
-/**
+/**X509证书的信任管理器，用来对安全套接字实施认证
  * The trust manager for X509 certificates to be used to perform authentication
  * for secure sockets.
  */
 public interface X509TrustManager extends TrustManager {
 
-    /**
+    /**检测指定的证书链是否可以被验证，是否可以被指定类型的客户端认证信任，
+     * 检查指定的证书链（部分或完整）是否可以
+           *被验证并被信任用于指定的客户端身份验证类型。
      * Checks whether the specified certificate chain (partial or complete) can
      * be validated and is trusted for client authentication for the specified
      * authentication type.
@@ -46,7 +48,9 @@ public interface X509TrustManager extends TrustManager {
             throws CertificateException;
 
 
-    /**
+    /**检查指定的证书链（部分或完整）是否可以
+           *被验证并被信任用于指定的服务器认证
+           *密钥交换算法
      * Checks whether the specified certificate chain (partial or complete) can
      * be validated and is trusted for server authentication for the specified
      * key exchange algorithm.
@@ -65,7 +69,7 @@ public interface X509TrustManager extends TrustManager {
     public void checkServerTrusted(X509Certificate[] chain, String authType)
             throws CertificateException;
 
-    /**
+    /**返回对端信任的证书颁发机构列表
      * Returns the list of certificate issuer authorities which are trusted for
      * authentication of peers.
      *

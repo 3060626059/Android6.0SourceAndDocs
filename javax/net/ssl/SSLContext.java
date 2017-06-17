@@ -26,7 +26,7 @@ import java.security.Security;
 import org.apache.harmony.security.fortress.Engine;
 
 
-/**
+/**安全套接字实现的公开api,主要作为SSLSocketFactory和SSLEngine的工厂类，
  * The public API for secure socket protocol implementations. It acts as factory
  * for {@code SSLSocketFactory}'s and {@code SSLEngine}s.
  */

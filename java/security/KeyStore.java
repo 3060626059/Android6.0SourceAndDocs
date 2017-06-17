@@ -35,7 +35,7 @@ import javax.security.auth.callback.CallbackHandler;
 import libcore.io.IoUtils;
 import org.apache.harmony.security.fortress.Engine;
 
-/**
+/**密钥库，负责维护加密密钥和密钥的拥有者
  * {@code KeyStore} is responsible for maintaining cryptographic keys and their
  * owners.
  * <p>
