@@ -24,7 +24,7 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.util.Arrays;
 
-/**
+/**证书
  * Abstract class to represent identity certificates. It represents a way to
  * verify the binding of a Principal and its public key. Examples are X.509,
  * PGP, and SDSI.

@@ -24,7 +24,7 @@ import java.security.Security;
 import javax.net.SocketFactory;
 import org.apache.harmony.security.fortress.Services;
 
-/**
+/**创建SSLSocket的抽象工厂类
  * The abstract factory implementation to create {@code SSLSocket}s.
  */
 public abstract class SSLSocketFactory extends SocketFactory {

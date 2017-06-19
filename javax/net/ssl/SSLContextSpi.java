@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.SecureRandom;
 
-/**
+/**服务提供商接口，
  * The <i>Service Provider Interface</i> (SPI) for the {@code SSLContext} class.
  */
 public abstract class SSLContextSpi {

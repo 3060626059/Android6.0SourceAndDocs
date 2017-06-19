@@ -20,7 +20,7 @@ package java.util;
 
 import java.io.Serializable;
 
-/**
+/**事件对象，
  * {@code EventObject}s represent events. Typically applications subclass this class to
  * add event specific information.
  *

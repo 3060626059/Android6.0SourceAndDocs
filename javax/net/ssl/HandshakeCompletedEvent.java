@@ -53,7 +53,7 @@ public class HandshakeCompletedEvent extends EventObject {
         return session;
     }
 
-    /**
+    /**返回握手阶段协商的加密套件
      * Returns the name of the cipher suite negotiated during this handshake.
      *
      * @return the name of the cipher suite negotiated during this handshake.
@@ -62,7 +62,7 @@ public class HandshakeCompletedEvent extends EventObject {
         return session.getCipherSuite();
     }
 
-    /**
+    /**握手阶段使用的本地证书列表，这些证书是要发送给对方的
      * Returns the list of local certificates used during the handshake. These
      * certificates were sent to the peer.
      *
@@ -74,7 +74,7 @@ public class HandshakeCompletedEvent extends EventObject {
         return session.getLocalCertificates();
     }
 
-    /**
+    /**返回握手的时候，对方使用的证书列表
      * Return the list of certificates identifying the peer during the
      * handshake.
      *
@@ -87,7 +87,7 @@ public class HandshakeCompletedEvent extends EventObject {
         return session.getPeerCertificates();
     }
 
-    /**
+    /**返回对方的证书列表
      * Returns the list of certificates identifying the peer. The peer's
      * identity certificate is followed by the validated certificate authority
      * certificates.

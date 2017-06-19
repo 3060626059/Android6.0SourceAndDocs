@@ -21,7 +21,7 @@ import java.security.Principal;
 import java.security.cert.Certificate;
 import javax.security.cert.X509Certificate;
 
-/**
+/**代表SSL会话的接口
  * The interface representing an SSL session.
  */
 public interface SSLSession {

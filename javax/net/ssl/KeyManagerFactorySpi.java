@@ -23,7 +23,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 
-/**
+/**服务提供商需要实现的接口
  * The <i>Service Provider Interface</i> (SPI) for the
  * {@code KeyManagerFactory} class.
  */

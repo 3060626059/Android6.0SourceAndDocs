@@ -19,7 +19,7 @@ package javax.net.ssl;
 
 import java.util.EventListener;
 
-/**
+/**SSL握手结束事件
  * The listener to be implemented to receive event notifications on completion
  * of SSL handshake on an SSL connection.
  */

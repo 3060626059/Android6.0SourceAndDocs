@@ -655,7 +655,7 @@ public class Socket implements Closeable {
         isOutputShutdown = true;
     }
 
-    /**
+    /**检查各种状态，创建底层的Socket
      * Checks whether the socket is closed, and throws an exception. Otherwise
      * creates the underlying SocketImpl.
      *
@@ -722,7 +722,7 @@ public class Socket implements Closeable {
         return new InetSocketAddress(getInetAddress(), getPort());
     }
 
-    /**
+    /**检测是否和本地地址进行了绑定
      * Returns whether this socket is bound to a local address and port.
      *
      * @return {@code true} if the socket is bound to a local address, {@code
@@ -741,7 +741,7 @@ public class Socket implements Closeable {
         return isConnected;
     }
 
-    /**
+    /**返回是否已经关闭
      * Returns whether this socket is closed.
      *
      * @return {@code true} if the socket is closed, {@code false} otherwise.
@@ -827,7 +827,7 @@ public class Socket implements Closeable {
         connect(remoteAddr, 0);
     }
 
-    /**
+    /**链接当前的socket到指定的服务端地址，阻塞操作
      * Connects this socket to the given remote host address and port specified
      * by the SocketAddress {@code remoteAddr} with the specified timeout. The
      * connecting method will block until the connection is established or an

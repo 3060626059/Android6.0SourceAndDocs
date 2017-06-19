@@ -16,7 +16,7 @@
 
 package javax.net.ssl;
 
-/**
+/**SSL握手参数，包括协议，加密套件，客户端认证要求
  * SSL handshake parameters that include protocols, cipher suites, and
  * client authentication requirements.
  * @since 1.6

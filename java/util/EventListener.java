@@ -17,7 +17,7 @@
 
 package java.util;
 
-/**
+/**所有事件监听器的接口
  * EventListener is the superclass of all event listener interfaces.
  *
  * @see EventObject
