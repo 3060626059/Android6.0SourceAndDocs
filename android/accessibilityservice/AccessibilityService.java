@@ -38,7 +38,8 @@ import com.android.internal.os.SomeArgs;
 
 import java.util.List;
 
-/**
+/**辅助服务运行在后台，当辅助事件发生时，接受系统调用，这些事件标识ui页面状态变化，比如焦点变化，按钮被点击等。
+ * 辅助服务可以查询活动窗口的内容。
  * An accessibility service runs in the background and receives callbacks by the system
  * when {@link AccessibilityEvent}s are fired. Such events denote some state transition
  * in the user interface, for example, the focus has changed, a button has been clicked,
@@ -53,6 +54,8 @@ import java.util.List;
  * developer guide.</p>
  * </div>
  *
+ *
+ * 辅助服务的生命周期还是会遵循普通服务的生命周期，初次之外还会受系统影响，在设置程序里面的辅助服务部分启动或禁止辅助服务
  * <h3>Lifecycle</h3>
  * <p>
  * The lifecycle of an accessibility service is managed exclusively by the system and
@@ -62,6 +65,8 @@ import java.util.List;
  * calls {@link AccessibilityService#onServiceConnected()}. This method can be
  * overriden by clients that want to perform post binding setup.
  * </p>
+ *
+ * 辅助服务需要声明特定的intent和权限，否则不起作用，
  * <h3>Declaration</h3>
  * <p>
  * An accessibility is declared as any other service in an AndroidManifest.xml but it
@@ -80,6 +85,9 @@ import java.util.List;
  *     &lt;/intent-filter&gt;
  *     . . .
  * &lt;/service&gt;</pre>
+ *
+ * 辅助服务可以配置成接受特定的辅助事件、特定的包、在指定的时间只接受一次事件，获取窗口内容，指定设置程序等
+ *
  * <h3>Configuration</h3>
  * <p>
  * An accessibility service can be configured to receive specific types of accessibility events,
@@ -87,10 +95,13 @@ import java.util.List;
  * retrieve window content, specify a settings activity, etc.
  * </p>
  * <p>
+ *
+ * 有俩种方法配置辅助服务，
  * There are two approaches for configuring an accessibility service:
  * </p>
  * <ul>
  * <li>
+ * 1.manifest声明辅助服务的时候，进行配置，
  * Providing a {@link #SERVICE_META_DATA meta-data} entry in the manifest when declaring
  * the service. A service declaration with a meta-data tag is presented below:
  * <pre> &lt;service android:name=".MyAccessibilityService"&gt;
@@ -108,6 +119,7 @@ import java.util.List;
  * </p>
  * </li>
  * <li>
+ * 2.调用setServiceInfo进行设置，这个方法可以任何时候进行调用，动态改变配置
  * Calling {@link AccessibilityService#setServiceInfo(AccessibilityServiceInfo)}. Note
  * that this method can be called any time to dynamically change the service configuration.
  * <p class="note">
@@ -123,6 +135,8 @@ import java.util.List;
  * </p>
  * </li>
  * </ul>
+ *
+ * 获取活动窗口内容，
  * <h3>Retrieving window content</h3>
  * <p>
  * A service can specify in its declaration that it can retrieve the active window
@@ -141,6 +155,7 @@ import java.util.List;
  * during touch exploration.
  * </p>
  * <p>
+ * 访问窗口内容的入口点，是调用AccessibilityEvent.getSource方法，得到一个AccessibilityNodeInfo，然后就可以遍历窗口内容
  * The entry point for retrieving window content is through calling
  * {@link AccessibilityEvent#getSource() AccessibilityEvent.getSource()} of the last received
  * event of the above types or a previous event from the same window
@@ -148,6 +163,8 @@ import java.util.List;
  * this method will return an {@link AccessibilityNodeInfo} that can be used to traverse the
  * window content which represented as a tree of such objects.
  * </p>
+ *
+ *
  * <p class="note">
  * <strong>Note</strong> An accessibility service may have requested to be notified for
  * a subset of the event types, thus be unaware that the active window has changed. Therefore
@@ -168,6 +185,7 @@ import java.util.List;
  * </li>
  * </ul>
  * </p>
+ * 通知策略，因为可能有不同的辅助服务监听了，
  * <h3>Notification strategy</h3>
  * <p>
  * For each feedback type only one accessibility service is notified. Services are notified
@@ -494,7 +512,7 @@ public abstract class AccessibilityService extends Service {
         return AccessibilityInteractionClient.getInstance().getWindows(mConnectionId);
     }
 
-    /**
+    /**当前活动窗口的根节点，
      * Gets the root node in the currently active window if this service
      * can retrieve window content. The active window is the one that the user
      * is currently touching or the window with input focus, if the user is not

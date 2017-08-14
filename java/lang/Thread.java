@@ -661,7 +661,7 @@ public class Thread implements Runnable {
 
     private native void nativeInterrupt();
 
-    /**
+    /**判断当前线程的中断状态，会清除中断状态标记
      * Returns a <code>boolean</code> indicating whether the current Thread (
      * <code>currentThread()</code>) has a pending interrupt request (<code>
      * true</code>) or not (<code>false</code>). It also has the side-effect of

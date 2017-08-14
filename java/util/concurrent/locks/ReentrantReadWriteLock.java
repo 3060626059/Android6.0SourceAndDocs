@@ -211,6 +211,7 @@ public class ReentrantReadWriteLock
      */
     public ReentrantReadWriteLock(boolean fair) {
         sync = fair ? new FairSync() : new NonfairSync();
+        //读写锁在构造函数里面已经构造好了
         readerLock = new ReadLock(this);
         writerLock = new WriteLock(this);
     }
@@ -225,7 +226,7 @@ public class ReentrantReadWriteLock
     abstract static class Sync extends AbstractQueuedSynchronizer {
         private static final long serialVersionUID = 6317671515068378041L;
 
-        /*
+        /*高16位保存的是读锁的相关信息，低16位保存的是写锁相关的信息
          * Read vs write count extraction constants and functions.
          * Lock state is logically divided into two unsigned shorts:
          * The lower one representing the exclusive (writer) lock hold count,
@@ -235,11 +236,12 @@ public class ReentrantReadWriteLock
         static final int SHARED_SHIFT   = 16;
         static final int SHARED_UNIT    = (1 << SHARED_SHIFT);
         static final int MAX_COUNT      = (1 << SHARED_SHIFT) - 1;
+        //低位是排他锁，
         static final int EXCLUSIVE_MASK = (1 << SHARED_SHIFT) - 1;
 
-        /** Returns the number of shared holds represented in count. */
+        /** 共享锁的获取个数 Returns the number of shared holds represented in count. */
         static int sharedCount(int c)    { return c >>> SHARED_SHIFT; }
-        /** Returns the number of exclusive holds represented in count. */
+        /** 排他锁的获取个数 Returns the number of exclusive holds represented in count. */
         static int exclusiveCount(int c) { return c & EXCLUSIVE_MASK; }
 
         /**
@@ -349,7 +351,7 @@ public class ReentrantReadWriteLock
             setState(nextc);
             return free;
         }
-
+        //排他模式，
         protected final boolean tryAcquire(int acquires) {
             /*
              * Walkthrough:
@@ -364,17 +366,21 @@ public class ReentrantReadWriteLock
              */
             Thread current = Thread.currentThread();
             int c = getState();
-            int w = exclusiveCount(c);
+            int w = exclusiveCount(c);//排他锁获取的个数，
             if (c != 0) {
+                //表明至少有一个锁，
+                //如果获取写锁时当前已经有读锁了，那么是不能获取写锁的，需要等待
                 // (Note: if c != 0 and w == 0 then shared count != 0)
                 if (w == 0 || current != getExclusiveOwnerThread())
                     return false;
                 if (w + exclusiveCount(acquires) > MAX_COUNT)
                     throw new Error("Maximum lock count exceeded");
                 // Reentrant acquire
+                //写锁重入，
                 setState(c + acquires);
                 return true;
             }
+            //当前没有锁请求，
             if (writerShouldBlock() ||
                 !compareAndSetState(c, c + acquires))
                 return false;
@@ -878,7 +884,7 @@ public class ReentrantReadWriteLock
         }
     }
 
-    /**
+    /**写锁，可重入的排他锁，
      * The lock returned by method {@link ReentrantReadWriteLock#writeLock}.
      */
     public static class WriteLock implements Lock, java.io.Serializable {
@@ -1222,7 +1228,7 @@ public class ReentrantReadWriteLock
         return sync.getOwner();
     }
 
-    /**
+    /**返回当前读锁被获取的次数，该次数不一定等于获取读锁的线程数，因为有些线程可能多次获取读锁
      * Queries the number of read locks held for this lock. This
      * method is designed for use in monitoring system state, not for
      * synchronization control.
@@ -1232,7 +1238,7 @@ public class ReentrantReadWriteLock
         return sync.getReadLockCount();
     }
 
-    /**
+    /**判断写锁是否被获取
      * Queries if the write lock is held by any thread. This method is
      * designed for use in monitoring system state, not for
      * synchronization control.
@@ -1254,7 +1260,7 @@ public class ReentrantReadWriteLock
         return sync.isHeldExclusively();
     }
 
-    /**
+    /**返回当前写锁被获取的次数
      * Queries the number of reentrant write holds on this lock by the
      * current thread.  A writer thread has a hold on a lock for
      * each lock action that is not matched by an unlock action.
@@ -1266,7 +1272,7 @@ public class ReentrantReadWriteLock
         return sync.getWriteHoldCount();
     }
 
-    /**
+    /**返回当前线程获取读锁的次数
      * Queries the number of reentrant read holds on this lock by the
      * current thread.  A reader thread has a hold on a lock for
      * each lock action that is not matched by an unlock action.

@@ -114,7 +114,7 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  *
  *   void doWork() { ... }
  * }}</pre>
- *
+ *计数器到0后，调用await方法的线程就能看到调用countDown的线程所做的操作
  * <p>Memory consistency effects: Until the count reaches
  * zero, actions in a thread prior to calling
  * {@code countDown()}

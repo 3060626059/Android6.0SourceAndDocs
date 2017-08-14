@@ -8,7 +8,7 @@ package java.util.concurrent.atomic;
 
 import sun.misc.Unsafe;
 
-/**
+/**原子更新的是这个引用变量，而不是原子更新引用对应的对象里面的字段
  * An object reference that may be updated atomically. See the {@link
  * java.util.concurrent.atomic} package specification for description
  * of the properties of atomic variables.

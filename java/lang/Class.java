@@ -530,7 +530,7 @@ public final class Class<T> implements Serializable, AnnotatedElement, GenericDe
         return result;
     }
 
-    /**
+    /**返回指定类声明的构造函数
      * Returns the constructor with the given parameters if it is defined by this class;
      * {@code null} otherwise. This may return a non-public member.
      *
@@ -564,7 +564,7 @@ public final class Class<T> implements Serializable, AnnotatedElement, GenericDe
 
     private native Constructor<?>[] getDeclaredConstructorsInternal(boolean publicOnly);
 
-    /**
+    /**返回在这个Class描述的class里面声明的匹配指定方法名和方法参数的方法，这个只会在指定的类里面寻找，而且可以寻找私有方法等
      * Returns a {@code Method} object which represents the method matching the
      * specified name and parameter types that is declared by the class
      * represented by this {@code Class}.
@@ -586,7 +586,7 @@ public final class Class<T> implements Serializable, AnnotatedElement, GenericDe
         return getMethod(name, parameterTypes, false);
     }
 
-    /**
+    /**寻找public方法，有一定的搜索顺序，会先从指定的类找，然后从它的父类，实现的接口里面找，
      * Returns a {@code Method} object which represents the public method with
      * the specified name and parameter types.
      * {@code (Class[]) null} is equivalent to the empty array.
@@ -625,9 +625,10 @@ public final class Class<T> implements Serializable, AnnotatedElement, GenericDe
         }
         return result;
     }
-
+    //递归寻找指定名字和参数的public方法
     private Method getPublicMethodRecursive(String name, Class<?>[] parameterTypes) {
         // search superclasses
+        //是所有父类，也就是说类继承层次上所有的类
         for (Class<?> c = this; c != null; c = c.getSuperclass()) {
             Method result = c.getDeclaredMethodInternal(name, parameterTypes);
             if (result != null && Modifier.isPublic(result.getAccessFlags())) {
@@ -635,6 +636,7 @@ public final class Class<T> implements Serializable, AnnotatedElement, GenericDe
             }
         }
         // search iftable which has a flattened and uniqued list of interfaces
+        //从接口里面找
         Object[] iftable = ifTable;
         if (iftable != null) {
             for (int i = 0; i < iftable.length; i += 2) {
@@ -648,7 +650,7 @@ public final class Class<T> implements Serializable, AnnotatedElement, GenericDe
         return null;
     }
 
-    /**
+    /**返回在指定类声明的方法，可以是private的方法
      * Returns the method if it is defined by this class; {@code null} otherwise. This may return a
      * non-public member.
      *
@@ -657,7 +659,7 @@ public final class Class<T> implements Serializable, AnnotatedElement, GenericDe
      */
     private native Method getDeclaredMethodInternal(String name, Class<?>[] args);
 
-    /**
+    /**返回这个类声明的所有方法
      * Returns an array containing {@code Method} objects for all methods
      * declared in the class represented by this {@code Class}. If there are no
      * methods or if this {@code Class} represents an array class, a primitive
@@ -731,7 +733,7 @@ public final class Class<T> implements Serializable, AnnotatedElement, GenericDe
         }
     }
 
-    /**
+    /**返回直接修饰指定类的注解
      * Returns the annotations that are directly defined on the class
      * represented by this {@code Class}. Annotations that are inherited are not
      * included in the result. If there are no annotations at all, an empty
@@ -792,7 +794,7 @@ public final class Class<T> implements Serializable, AnnotatedElement, GenericDe
      */
     private native Field[] getPublicDeclaredFields();
 
-    /**
+    /**返回指定类C所在的声明类A，也就是说类C是在类A里面声明的
      * Returns the class that this class is a member of, or {@code null} if this
      * class is a top-level class, a primitive, an array, or defined within a
      * method or constructor.
@@ -1252,7 +1254,7 @@ public final class Class<T> implements Serializable, AnnotatedElement, GenericDe
         return (accessFlags & 0x00040000) != 0;
     }
 
-    /**
+    /**指定参数能否转换成当前Class所描述的class的对象
      * Can {@code c}  be assigned to this class? For example, String can be assigned to Object
      * (by an upcast), however, an Object cannot be assigned to a String as a potentially exception
      * throwing downcast would be necessary. Similarly for interfaces, a class that implements (or
@@ -1294,7 +1296,7 @@ public final class Class<T> implements Serializable, AnnotatedElement, GenericDe
         }
     }
 
-    /**
+    /**是否是枚举
      * Tests whether the class represented by this {@code Class} is an
      * {@code enum}.
      */
@@ -1302,7 +1304,7 @@ public final class Class<T> implements Serializable, AnnotatedElement, GenericDe
         return (getSuperclass() == Enum.class) && ((accessFlags & 0x4000) != 0);
     }
 
-    /**
+    /**instanceof运算符的运行时环境版本，参数指定的对象是否可以转换成当前class的对象
      * Tests whether the given object can be cast to the class
      * represented by this {@code Class}. This is the runtime version of the
      * {@code instanceof} operator.
@@ -1318,7 +1320,7 @@ public final class Class<T> implements Serializable, AnnotatedElement, GenericDe
         return isAssignableFrom(object.getClass());
     }
 
-    /**
+    /**检测是否是接口
      * Tests whether this {@code Class} represents an interface.
      */
     public boolean isInterface() {
@@ -1335,7 +1337,7 @@ public final class Class<T> implements Serializable, AnnotatedElement, GenericDe
                 && !isAnonymousClass();
     }
 
-    /**
+    /**是否是成员类
      * Tests whether the class represented by this {@code Class} is a member
      * class.
      */

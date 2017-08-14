@@ -108,7 +108,7 @@ public class LockSupport {
         unsafe.putObject(t, parkBlockerOffset, arg);
     }
 
-    /**
+    /**唤醒线程
      * Makes available the permit for the given thread, if it
      * was not already available.  If the thread was blocked on
      * {@code park} then it will unblock.  Otherwise, its next call
@@ -124,7 +124,9 @@ public class LockSupport {
             unsafe.unpark(thread);
     }
 
-    /**
+    /**禁用线程的调度，这个方法是阻塞方法，发生下面三种情况时才会返回：
+     * 1.其他线程针对这个线程对象调用了unpark方法
+     * 2.其他线程中断了这个线程
      * Disables the current thread for thread scheduling purposes unless the
      * permit is available.
      *

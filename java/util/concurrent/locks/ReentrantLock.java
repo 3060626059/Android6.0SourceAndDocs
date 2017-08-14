@@ -204,6 +204,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
             final Thread current = Thread.currentThread();
             int c = getState();
             if (c == 0) {
+                //同步队列中当前节点是否有前驱节点，如果有的话，表示有线程比当前线程更早的请求获取锁，因此当前线程需要等待前驱线程获取并释放锁之后才能继续获取锁
                 if (!hasQueuedPredecessors() &&
                     compareAndSetState(0, acquires)) {
                     setExclusiveOwnerThread(current);
@@ -562,7 +563,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         return sync.isLocked();
     }
 
-    /**
+    /**返回这个锁是否是公平的
      * Returns {@code true} if this lock has fairness set true.
      *
      * @return {@code true} if this lock has fairness set true

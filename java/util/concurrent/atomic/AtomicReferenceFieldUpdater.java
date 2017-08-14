@@ -182,6 +182,7 @@ public abstract class AtomicReferenceFieldUpdater<T,V> {
             final Class<?> caller;
             final int modifiers;
             try {
+                //获取声明的字段，，
                 field = tclass.getDeclaredField(fieldName); // android-changed
                 caller = VMStack.getStackClass2(); // android-changed
                 modifiers = field.getModifiers();

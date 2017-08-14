@@ -9,8 +9,9 @@ package java.util.concurrent.locks;
 import java.util.concurrent.TimeUnit;
 import java.util.Date;
 
-/**
- * {@code Condition} factors out the {@code Object} monitor
+/**定义了等待通知俩种类型的方法，调用这些方法时，当前线程必须已经获得了与Condition关联的Lock对象，，Condition是依赖Lock对象的，
+ * 调用await方法后，当前线程会释放锁并在这个地方等待，其他线程调用这个Condition对象的signal方法，通知当前线程后，当前线程才从await方法返回，并且在返回前已经获取了锁。
+ *  * {@code Condition} factors out the {@code Object} monitor
  * methods ({@link Object#wait() wait}, {@link Object#notify notify}
  * and {@link Object#notifyAll notifyAll}) into distinct objects to
  * give the effect of having multiple wait-sets per object, by
@@ -150,7 +151,11 @@ import java.util.Date;
  */
 public interface Condition {
 
-    /**
+    /**当前线程进入等待状态，直到被通知或者被中断，当前线程线程进入运行状态并且从await方法返回的情况，包括：
+     * a.其他线程调用该Condition的signal或者signalAll方法，并且当前线程被选中唤醒
+     * b.其他线程调用interrupt方法中断当前线程
+     * 如果当前线程从await方法返回，表明该线程获取了Condition对象对应的锁
+     *
      * Causes the current thread to wait until it is signalled or
      * {@linkplain Thread#interrupt interrupted}.
      *
@@ -167,7 +172,7 @@ public interface Condition {
      * current thread, and interruption of thread suspension is supported; or
      * <li>A &quot;<em>spurious wakeup</em>&quot; occurs.
      * </ul>
-     *
+     *不管上面哪一种情况，在await方法返回前，当前线程必须重新获取Condition关联的锁，从await方法返回后，当前线程一定已经拿到了锁，
      * <p>In all cases, before this method can return the current thread must
      * re-acquire the lock associated with this condition. When the
      * thread returns it is <em>guaranteed</em> to hold this lock.
@@ -202,7 +207,7 @@ public interface Condition {
      */
     void await() throws InterruptedException;
 
-    /**
+    /**对中断不感兴趣，，，
      * Causes the current thread to wait until it is signalled.
      *
      * <p>The lock associated with this condition is atomically
@@ -238,7 +243,7 @@ public interface Condition {
      */
     void awaitUninterruptibly();
 
-    /**
+    /**当前线程进入等待状态，直到被通知、中断或者超时，返回值表示剩余超时时间，如果小于或者等于0，表示超时时间已经到了
      * Causes the current thread to wait until it is signalled or interrupted,
      * or the specified waiting time elapses.
      *
@@ -344,7 +349,7 @@ public interface Condition {
      */
     boolean await(long time, TimeUnit unit) throws InterruptedException;
 
-    /**
+    /**当前线程进入等待状态，直到被通知、中断或者到某个指定时间，如果没有到指定时间就被通知，方法返回true
      * Causes the current thread to wait until it is signalled or interrupted,
      * or the specified deadline elapses.
      *
@@ -421,7 +426,7 @@ public interface Condition {
      */
     boolean awaitUntil(Date deadline) throws InterruptedException;
 
-    /**
+    /**唤醒一个等待在Condition上的线程，该线程从等待方法返回前必须获得与Condition关联的锁
      * Wakes up one waiting thread.
      *
      * <p>If any threads are waiting on this condition then one
@@ -439,7 +444,7 @@ public interface Condition {
      */
     void signal();
 
-    /**
+    /**唤醒所有等待在Condition上的线程
      * Wakes up all waiting threads.
      *
      * <p>If any threads are waiting on this condition then they are

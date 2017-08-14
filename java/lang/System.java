@@ -180,7 +180,7 @@ public final class System {
     private System() {
     }
 
-    /**
+    /**浅复制，
      * Copies {@code length} elements from the array {@code src},
      * starting at offset {@code srcPos}, into the array {@code dst},
      * starting at offset {@code dstPos}.

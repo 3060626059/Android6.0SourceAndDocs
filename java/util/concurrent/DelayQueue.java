@@ -15,7 +15,7 @@ import java.util.*;
 // removed link to collections framework docs
 // END android-note
 
-/**
+/**一个支持延时获取元素的无界阻塞队列，只有在延迟期满时才能从队列中提取元素，
  * An unbounded {@linkplain BlockingQueue blocking queue} of
  * {@code Delayed} elements, in which an element can only be taken
  * when its delay has expired.  The <em>head</em> of the queue is that

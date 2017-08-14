@@ -146,7 +146,7 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
      */
 
     private static class Node<E> {
-        volatile E item;
+        volatile E item; //真正的元素值，
         volatile Node<E> next;
 
         /**

@@ -38,7 +38,7 @@ public abstract class AtomicIntegerFieldUpdater<T> {
      * The Class argument is needed to check that reflective types and
      * generic types match.
      *
-     * @param tclass the class of the objects holding the field
+     * @param tclass the class of the objects holding the field  目标类，
      * @param fieldName the name of the field to be updated
      * @return the updater
      * @throws IllegalArgumentException if the field is not a
@@ -65,7 +65,7 @@ public abstract class AtomicIntegerFieldUpdater<T> {
      * other calls to {@code compareAndSet} and {@code set}, but not
      * necessarily with respect to other changes in the field.
      *
-     * @param obj An object whose field to conditionally set
+     * @param obj An object whose field to conditionally set  目标对象
      * @param expect the expected value
      * @param update the new value
      * @return true if successful

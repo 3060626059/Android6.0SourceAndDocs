@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
+/**从AccessibilityService视角看来，整个窗口内容是可访问节点构成的树，可访问节点和view可能不是一一对应的，
  * This class represents a node of the window content as well as actions that
  * can be requested from its source. From the point of view of an
  * {@link android.accessibilityservice.AccessibilityService} a window content is

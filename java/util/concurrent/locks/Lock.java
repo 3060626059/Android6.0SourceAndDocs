@@ -8,7 +8,7 @@ package java.util.concurrent.locks;
 
 import java.util.concurrent.TimeUnit;
 
-/**
+/**一般来说，一个锁能够防止多个线程同时访问共享资源，但是有些锁可以允许多个线程并发的访问共享资源，比如读写锁
  * {@code Lock} implementations provide more extensive locking
  * operations than can be obtained using {@code synchronized} methods
  * and statements.  They allow more flexible structuring, may have
@@ -138,7 +138,7 @@ import java.util.concurrent.TimeUnit;
  */
 public interface Lock {
 
-    /**
+    /**获取锁，获取锁成功后才会返回，阻塞操作，
      * Acquires the lock.
      *
      * <p>If the lock is not available then the current thread becomes
@@ -155,7 +155,7 @@ public interface Lock {
      */
     void lock();
 
-    /**
+    /**中断的获取锁，也就是说在获取锁的过程中可以响应中断，可以中断当前线程。
      * Acquires the lock unless the current thread is
      * {@linkplain Thread#interrupt interrupted}.
      *
@@ -203,7 +203,7 @@ public interface Lock {
      */
     void lockInterruptibly() throws InterruptedException;
 
-    /**
+    /**尝试非阻塞的获取锁，会立刻返回，
      * Acquires the lock only if it is free at the time of invocation.
      *
      * <p>Acquires the lock if it is available and returns immediately
@@ -232,7 +232,10 @@ public interface Lock {
      */
     boolean tryLock();
 
-    /**
+    /**超时获取锁，当前线程在以下3种情况下会返回</br>
+     * 1.当前线程在超时时间内获取到了锁</br>
+     * 2.当前线程在超时时间内被中断</br>
+     * 3.超时时间结束，返回false</br>
      * Acquires the lock if it is free within the given waiting time and the
      * current thread has not been {@linkplain Thread#interrupt interrupted}.
      *
@@ -292,7 +295,7 @@ public interface Lock {
      */
     boolean tryLock(long time, TimeUnit unit) throws InterruptedException;
 
-    /**
+    /**释放锁，
      * Releases the lock.
      *
      * <p><b>Implementation Considerations</b>
@@ -306,7 +309,7 @@ public interface Lock {
      */
     void unlock();
 
-    /**
+    /**获取等待通知的组件，该组件和当前锁绑定，当前线程只有获得了锁，才能调用该组件的wait方法，而调用后，当前线程将释放锁，
      * Returns a new {@link Condition} instance that is bound to this
      * {@code Lock} instance.
      *

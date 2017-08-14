@@ -116,6 +116,8 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * permits at a time.  Beware of the increased risk of indefinite
  * postponement when these methods are used without fairness set true.
  *
+ *
+ * 内存一致性  调用acquire方法的线程能够看到调用release方法的线程所做的操作
  * <p>Memory consistency effects: Actions in a thread prior to calling
  * a "release" method such as {@code release()}
  * <a href="package-summary.html#MemoryVisibility"><i>happen-before</i></a>

@@ -9,7 +9,7 @@ package java.util.concurrent;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
+/**同步屏障CyclicBarrier 让一组线程通过调用await方法到达一个屏障（也叫同步点）时被阻塞，直到最后一个线程调用await方法到达屏障时，屏障才会开门，所有被屏障拦截的线程才会继续运行，注意这个组件是没有countDown方法的。
  * A synchronization aid that allows a set of threads to all wait for
  * each other to reach a common barrier point.  CyclicBarriers are
  * useful in programs involving a fixed sized party of threads that
@@ -92,6 +92,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * {@link InterruptedException} if they too were interrupted at about
  * the same time).
  *
+ * 内存一致性  await方法之前的操作  happens-before  barrier action
+ *  barrier action  happens-before await方法之后的操作。
  * <p>Memory consistency effects: Actions in a thread prior to calling
  * {@code await()}
  * <a href="package-summary.html#MemoryVisibility"><i>happen-before</i></a>
@@ -138,7 +140,7 @@ public class CyclicBarrier {
      */
     private int count;
 
-    /**
+    /**唤醒其他等待的线程，
      * Updates state on barrier trip and wakes up everyone.
      * Called only while holding lock.
      */
@@ -184,6 +186,7 @@ public class CyclicBarrier {
                 boolean ranAction = false;
                 try {
                     final Runnable command = barrierCommand;
+                    //最后一个到达的线程来执行这个，然后再通知其他线程打破屏障了，
                     if (command != null)
                         command.run();
                     ranAction = true;
@@ -230,7 +233,7 @@ public class CyclicBarrier {
         }
     }
 
-    /**
+    /**最后一个到达的线程执行参数指定的barrierAction
      * Creates a new {@code CyclicBarrier} that will trip when the
      * given number of parties (threads) are waiting upon it, and which
      * will execute the given barrier action when the barrier is tripped,

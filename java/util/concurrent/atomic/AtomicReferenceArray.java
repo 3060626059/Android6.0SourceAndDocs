@@ -51,6 +51,7 @@ public class AtomicReferenceArray<E> implements java.io.Serializable {
     }
 
     private static long byteOffset(int i) {
+        //下标转换成偏移量
         return ((long) i << shift) + base;
     }
 
@@ -73,6 +74,7 @@ public class AtomicReferenceArray<E> implements java.io.Serializable {
      */
     public AtomicReferenceArray(E[] array) {
         // Visibility guaranteed by final field guarantees
+        //浅复制，俩个数组里面的元素是共享的
         this.array = Arrays.copyOf(array, array.length, Object[].class);
     }
 

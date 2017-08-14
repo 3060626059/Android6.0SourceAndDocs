@@ -46,7 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
+/**用来描述无障碍服务（AccessibilityService），具体的无障碍事件是AccessibilityEvent
  * This class describes an {@link AccessibilityService}. The system notifies an
  * {@link AccessibilityService} for {@link android.view.accessibility.AccessibilityEvent}s
  * according to the information encapsulated in this class.

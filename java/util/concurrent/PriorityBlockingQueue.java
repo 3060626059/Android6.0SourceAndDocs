@@ -14,7 +14,7 @@ import java.util.*;
 // removed link to collections framework docs
 // END android-note
 
-/**
+/**支持优先级的无界阻塞队列，
  * An unbounded {@linkplain BlockingQueue blocking queue} that uses
  * the same ordering rules as class {@link PriorityQueue} and supplies
  * blocking retrieval operations.  While this queue is logically

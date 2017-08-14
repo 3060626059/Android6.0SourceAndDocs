@@ -61,6 +61,7 @@ public class AtomicIntegerArray implements java.io.Serializable {
      */
     public AtomicIntegerArray(int[] array) {
         // Visibility guaranteed by final field guarantees
+        //数组元素是基本类型，
         this.array = array.clone();
     }
 

@@ -19,7 +19,9 @@ import java.util.concurrent.locks.ReentrantLock;
 // removed link to collections framework docs
 // END android-note
 
-/**
+/**有界队列，FIFO,队列头是等待时间最长的，队尾插入元素，默认情况下是非公平的访问队列。
+ * 所谓的公平访问队列是指阻塞的线程，可以按照阻塞的先后顺序访问队列，即先阻塞的先访问队列。
+ * 如果公平了，那么会降低系统的吞吐量，因为会额外带来线程上下文切换
  * A bounded {@linkplain BlockingQueue blocking queue} backed by an
  * array.  This queue orders elements FIFO (first-in-first-out).  The
  * <em>head</em> of the queue is that element that has been on the
@@ -62,13 +64,13 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
     private static final long serialVersionUID = -817911632652898426L;
 
     /** The queued items */
-    final Object[] items;
+    final Object[] items;//队列元素，，，
 
     /** items index for next take, poll, peek or remove */
-    int takeIndex;
+    int takeIndex;//下一次取数据的下标，
 
     /** items index for next put, offer, or add */
-    int putIndex;
+    int putIndex;//下一次放数据的下标
 
     /** Number of elements in the queue */
     int count;
@@ -111,7 +113,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         return (E) items[i];
     }
 
-    /**
+    /**入队，
      * Inserts element at current put position, advances, and signals.
      * Call only when holding lock.
      */
@@ -122,7 +124,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         items[putIndex] = x;
         if (++putIndex == items.length) putIndex = 0;
         count++;
-        notEmpty.signal();
+        notEmpty.signal();//通知队列不空了，
     }
 
     /**
@@ -207,7 +209,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         if (capacity <= 0)
             throw new IllegalArgumentException();
         this.items = new Object[capacity];
-        lock = new ReentrantLock(fair);
+        lock = new ReentrantLock(fair);//可重入锁，
         notEmpty = lock.newCondition();
         notFull =  lock.newCondition();
     }
@@ -233,6 +235,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         this(capacity, fair);
 
         final ReentrantLock lock = this.lock;
+        //这个地方加锁，只是为了可见性，不是为了互斥性
         lock.lock(); // Lock only for visibility, not mutual exclusion
         try {
             int i = 0;
